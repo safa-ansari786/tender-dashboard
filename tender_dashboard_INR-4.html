@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tender Submission Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#ffffff; --bg2:#f5f5f4; --bg-info:#e6f1fb;
+    --tx:#1a1a18; --tx2:#6b6b68; --tx3:#9a9a96;
+    --tx-info:#185fa5; --tx-ok:#3b6d11; --tx-err:#a32d2d; --tx-warn:#854f0b;
+    --bd:rgba(0,0,0,0.12); --bd2:rgba(0,0,0,0.25);
+    --rm:8px; --rl:12px;
+    --green:#639922; --blue:#378add; --red:#e24b4a; --amber:#ba7517;
+  }
+  @media(prefers-color-scheme:dark){:root{
+    --bg:#1c1c1a; --bg2:#2a2a28; --bg-info:#0c2340;
+    --tx:#e8e8e4; --tx2:#a0a09c; --tx3:#6b6b68;
+    --tx-info:#85b7eb; --tx-ok:#97c459; --tx-err:#f09595; --tx-warn:#fac775;
+    --bd:rgba(255,255,255,0.1); --bd2:rgba(255,255,255,0.22);
+  }}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--tx);min-height:100vh;}
+  .topbar{background:var(--bg);border-bottom:.5px solid var(--bd);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;min-height:54px;position:sticky;top:0;z-index:50;flex-wrap:wrap;gap:8px;}
+  .topbar-title{font-size:15px;font-weight:500;display:flex;align-items:center;gap:8px;padding:8px 0;}
+  .topbar-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px 0;}
+  .wrap{max-width:980px;margin:0 auto;padding:1.25rem 1.25rem 3rem;}
+  .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;margin-bottom:1.25rem;}
+  .metric{background:var(--bg);border:.5px solid var(--bd);border-radius:var(--rm);padding:.75rem .875rem;}
+  .mlabel{font-size:11px;color:var(--tx2);margin-bottom:3px;}
+  .mval{font-size:20px;font-weight:500;}
+  .msub{font-size:10px;color:var(--tx3);margin-top:2px;}
+  .card{background:var(--bg);border:.5px solid var(--bd);border-radius:var(--rl);padding:1.125rem;margin-bottom:1.125rem;}
+  .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;}
+  .sec-title{font-size:13px;font-weight:500;}
+  select,input[type=number],input[type=text],input[type=date]{font-size:12px;padding:5px 8px;border-radius:var(--rm);border:.5px solid var(--bd2);background:var(--bg);color:var(--tx);outline:none;font-family:inherit;}
+  select:focus,input:focus{border-color:var(--blue);}
+  textarea{font-size:12px;padding:6px 9px;border-radius:var(--rm);border:.5px solid var(--bd2);background:var(--bg);color:var(--tx);font-family:inherit;resize:vertical;min-height:65px;width:100%;outline:none;}
+  .btn{font-size:12px;padding:5px 12px;border-radius:var(--rm);border:.5px solid var(--bd2);background:var(--bg);color:var(--tx);cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit;}
+  .btn:hover{background:var(--bg2);}
+  .btn-ok{background:var(--bg-info);color:var(--tx-info);border-color:rgba(55,138,221,.3);font-weight:500;}
+  .btn-ok:hover{opacity:.9;}
+  .btn-info{color:var(--tx-info);border-color:rgba(55,138,221,.3);}
+  .btn-danger{color:var(--tx-err);border-color:rgba(162,45,45,.3);}
+  .bar-wrap{margin-bottom:.875rem;}
+  .bar-lr{display:flex;justify-content:space-between;margin-bottom:3px;}
+  .bar-lbl{font-size:12px;color:var(--tx2);}
+  .bar-pct{font-size:12px;font-weight:500;}
+  .bar-track{height:7px;background:var(--bg2);border-radius:99px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:99px;transition:width .4s;}
+  .bar-sub{display:flex;justify-content:space-between;font-size:10px;color:var(--tx3);margin-top:2px;}
+  .alert-box{background:#faeeda;border:.5px solid #ba7517;border-radius:var(--rl);padding:.75rem 1rem;margin-bottom:1.125rem;}
+  .alert-title{font-size:12px;font-weight:500;color:#633806;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .alert-item{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#854f0b;padding:4px 0;border-bottom:.5px solid #ef9f27;}
+  .alert-item:last-child{border-bottom:none;}
+  .bracket-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;}
+  .bracket-lbl{width:88px;color:var(--tx2);flex-shrink:0;}
+  .bracket-track{flex:1;height:6px;background:var(--bg2);border-radius:99px;overflow:hidden;}
+  .bracket-fill{height:100%;border-radius:99px;background:var(--green);}
+  .bracket-pct{width:32px;text-align:right;font-weight:500;}
+  .bracket-ct{width:42px;text-align:right;color:var(--tx3);font-size:10px;}
+  .sector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:8px;}
+  .sector-card{background:var(--bg2);border-radius:var(--rm);padding:.5rem .75rem;}
+  .sector-name{font-size:11px;color:var(--tx2);margin-bottom:2px;}
+  .sector-stat{font-size:13px;font-weight:500;}
+  .sector-wr{font-size:10px;color:var(--tx3);margin-top:1px;}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:7px;font-size:11px;color:var(--tx2);}
+  .legend span{display:flex;align-items:center;gap:4px;}
+  .leg-sq{width:9px;height:9px;border-radius:2px;}
+  .tbl-wrap{border:.5px solid var(--bd);border-radius:var(--rl);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+  th{text-align:left;padding:8px 10px;font-size:11px;font-weight:500;color:var(--tx2);background:var(--bg2);border-bottom:.5px solid var(--bd);}
+  td{padding:8px 10px;color:var(--tx);border-bottom:.5px solid var(--bd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--bg2);}
+  .badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500;}
+  .b-pending{background:#faeeda;color:#854f0b;}
+  .b-won{background:#eaf3de;color:#3b6d11;}
+  .b-lost{background:#fcebeb;color:#a32d2d;}
+  .b-submitted{background:#e6f1fb;color:#185fa5;}
+  .b-overdue{background:#fcebeb;color:#a32d2d;}
+  .act-cell{display:flex;gap:3px;align-items:center;}
+  .act-icon{cursor:pointer;font-size:14px;padding:3px;border-radius:4px;color:var(--tx3);}
+  .act-icon:hover.edit{color:#185fa5;background:#e6f1fb;}
+  .act-icon:hover.del{color:#a32d2d;background:#fcebeb;}
+  .act-icon:hover.note{color:#185fa5;background:#e6f1fb;}
+  .act-icon.note.has{color:#185fa5;}
+  .act-icon.tick{color:var(--tx3);}
+  .act-icon.tick.done{color:#3b6d11;}
+  .fu-done{text-decoration:line-through;color:var(--tx3);}
+  .tick-btn{cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px;border:.5px solid var(--bd2);background:var(--bg);color:var(--tx3);font-family:inherit;line-height:1;}
+  .tick-btn.done{background:#eaf3de;color:#3b6d11;border-color:#8fba55;}
+  .target-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.875rem;}
+  .target-row label{font-size:12px;color:var(--tx2);}
+  .target-row input{width:60px;}
+  .week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+  .week-card{background:var(--bg2);border-radius:var(--rm);padding:.625rem .875rem;}
+  .week-lbl{font-size:11px;color:var(--tx2);margin-bottom:3px;}
+  .week-ct{font-size:19px;font-weight:500;}
+  .week-val{font-size:10px;color:var(--tx3);margin-top:2px;}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--bg);border-radius:var(--rl);border:.5px solid var(--bd);padding:1.25rem;width:370px;max-width:95vw;max-height:90vh;overflow-y:auto;}
+  .modal h3{font-size:15px;font-weight:500;margin-bottom:.875rem;}
+  .fr{margin-bottom:9px;}
+  .fr label{display:block;font-size:11px;color:var(--tx2);margin-bottom:3px;}
+  .fr input,.fr select,.fr textarea{width:100%;}
+  .fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px;}
+  .fr2 label{display:block;font-size:11px;color:var(--tx2);margin-bottom:3px;}
+  .fr2 input,.fr2 select{width:100%;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:.875rem;}
+  .empty{text-align:center;padding:2rem 1rem;color:var(--tx2);font-size:13px;}
+  @media(max-width:600px){
+    .wrap{padding:.875rem .875rem 3rem;}
+    .topbar{padding:0 .875rem;}
+    .metric-grid{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">
+    <i class="ti ti-file-invoice" style="font-size:18px;color:#378add;" aria-hidden="true"></i>
+    Tender Dashboard
+  </div>
+  <div class="topbar-actions">
+    <select id="yearFilter" onchange="render()"></select>
+    <select id="monthFilter" onchange="render()">
+      <option value="all">All months</option>
+      <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+      <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+      <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+      <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+    </select>
+    <button class="btn btn-info" onclick="exportCSV()"><i class="ti ti-download"></i> Export CSV</button>
+    <button class="btn btn-info" onclick="exportData()"><i class="ti ti-database-export"></i> Export Data</button>
+    <button class="btn btn-info" onclick="document.getElementById('importFile').click()"><i class="ti ti-database-import"></i> Import Data</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="btn btn-danger" onclick="openClear()"><i class="ti ti-trash"></i> Clear sample</button>
+    <button class="btn btn-ok" onclick="openAdd()"><i class="ti ti-plus"></i> Add tender</button>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="overlay" id="addModal" onclick="if(event.target===this)closeAdd()">
+  <div class="modal">
+    <h3>Add tender</h3>
+    <div class="fr"><label>Tender name *</label><input type="text" id="a-name" placeholder="e.g. Road construction project"></div>
+    <div class="fr"><label>Client / organisation</label><input type="text" id="a-client" placeholder="e.g. Ministry of Works"></div>
+    <div class="fr2">
+      <div><label>Value</label><input type="number" id="a-value" placeholder="e.g. 5000000" min="0"></div>
+      <div><label>Currency</label><select id="a-currency"><option>INR</option><option>USD</option><option>EUR</option><option>GBP</option><option>ZAR</option><option>KES</option><option>NGN</option><option>GHS</option><option>AED</option><option>Other</option></select></div>
+    </div>
+    <div class="fr2">
+      <div><label>Date submitted *</label><input type="date" id="a-date"></div>
+      <div><label>Status</label><select id="a-status"><option>Submitted</option><option>Pending</option><option>Won</option><option>Lost</option></select></div>
+    </div>
+    <div class="fr"><label>Sector</label><select id="a-sector"><option value="">— select sector —</option><option>Agriculture</option><option>Forestry & Natural Resources</option><option>Clean Energy</option><option>Climate Change</option><option>Education & Skills</option><option>Livelihoods</option><option>Health & Nutrition</option><option>Women & Child Development</option><option>WASH</option><option>Infrastructure & Transportation</option><option>Digi-Tech</option><option>Social Protection & Governance</option><option>Multi-Sector</option><option>Others</option></select></div>
+    <div class="fr"><label>Notes</label><textarea id="a-notes" placeholder="e.g. Waiting on procurement officer…"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeAdd()">Cancel</button>
+      <button class="btn btn-ok" onclick="saveTender()">Save tender</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="overlay" id="editModal" onclick="if(event.target===this)closeEdit()">
+  <div class="modal">
+    <h3>Edit tender</h3>
+    <div class="fr"><label>Tender name *</label><input type="text" id="e-name"></div>
+    <div class="fr"><label>Client / organisation</label><input type="text" id="e-client"></div>
+    <div class="fr2">
+      <div><label>Value</label><input type="number" id="e-value" min="0"></div>
+      <div><label>Currency</label><select id="e-currency"><option>INR</option><option>USD</option><option>EUR</option><option>GBP</option><option>ZAR</option><option>KES</option><option>NGN</option><option>GHS</option><option>AED</option><option>Other</option></select></div>
+    </div>
+    <div class="fr2">
+      <div><label>Date submitted *</label><input type="date" id="e-date"></div>
+      <div><label>Status</label><select id="e-status"><option>Submitted</option><option>Pending</option><option>Won</option><option>Lost</option></select></div>
+    </div>
+    <div class="fr"><label>Sector</label><select id="e-sector"><option value="">— select sector —</option><option>Agriculture</option><option>Forestry & Natural Resources</option><option>Clean Energy</option><option>Climate Change</option><option>Education & Skills</option><option>Livelihoods</option><option>Health & Nutrition</option><option>Women & Child Development</option><option>WASH</option><option>Infrastructure & Transportation</option><option>Digi-Tech</option><option>Social Protection & Governance</option><option>Multi-Sector</option><option>Others</option></select></div>
+    <div class="fr"><label>Notes</label><textarea id="e-notes"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-ok" onclick="updateTender()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTE MODAL -->
+<div class="overlay" id="noteModal" onclick="if(event.target===this)closeNote()">
+  <div class="modal">
+    <h3 id="noteName">Notes</h3>
+    <div class="fr"><textarea id="n-text" style="min-height:90px;" placeholder="Add your notes here…"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeNote()">Cancel</button>
+      <button class="btn btn-ok" onclick="saveNote()">Save note</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="overlay" id="delModal" onclick="if(event.target===this)closeDel()">
+  <div class="modal" style="width:320px;">
+    <h3>Delete tender?</h3>
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:1rem;">Permanently remove <strong id="delName"></strong>? This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeDel()">Cancel</button>
+      <button class="btn" style="background:#fcebeb;color:#a32d2d;border-color:#e24b4a;" onclick="confirmDel()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLEAR MODAL -->
+<div class="overlay" id="clearModal" onclick="if(event.target===this)closeClear()">
+  <div class="modal" style="width:320px;">
+    <h3>Clear all sample data?</h3>
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:1rem;">This deletes all sample tenders so you can start fresh. Cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeClear()">Cancel</button>
+      <button class="btn" style="background:#fcebeb;color:#a32d2d;border-color:#e24b4a;" onclick="confirmClear()">Clear sample data</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="metric-grid">
+    <div class="metric"><div class="mlabel">This week</div><div class="mval" id="m-week">0</div></div>
+    <div class="metric"><div class="mlabel" id="m-month-lbl">This month</div><div class="mval" id="m-month">0</div></div>
+    <div class="metric"><div class="mlabel" id="m-year-lbl">This year</div><div class="mval" id="m-year">0</div></div>
+    <div class="metric"><div class="mlabel">Total value (monthly)</div><div class="mval" id="m-pipe" style="color:#185fa5;">—</div><div class="msub" id="m-pipe-sub"></div></div>
+    <div class="metric"><div class="mlabel">Total value (year)</div><div class="mval" id="m-val">—</div><div class="msub" id="m-val-sub"></div></div>
+    <div class="metric"><div class="mlabel">Win rate</div><div class="mval" id="m-wr" style="color:#3b6d11;">—</div><div class="msub" id="m-wr-sub"></div></div>
+    <div class="metric"><div class="mlabel">Won value</div><div class="mval" id="m-wonval" style="color:#3b6d11;">—</div></div>
+    <div class="metric"><div class="mlabel">Follow-ups due</div><div class="mval" id="m-fu" style="color:#a32d2d;">0</div></div>
+    <div class="metric"><div class="mlabel">This month (submitted)</div><div class="mval" id="m-sub-mo">0</div><div class="msub" id="m-sub-mo-sub"></div></div>
+    <div class="metric"><div class="mlabel">Total tenders</div><div class="mval" id="m-total">0</div><div class="msub">all time</div></div>
+  </div>
+
+  <div class="card">
+    <div class="target-row">
+      <label for="tgt">Monthly target:</label>
+      <input type="number" id="tgt" min="1" max="200" step="1" value="20" onchange="render()">
+      <span style="font-size:12px;color:var(--tx2);">tenders/month</span>
+      <span id="tgt-status" style="font-size:12px;font-weight:500;"></span>
+    </div>
+    <div class="bar-wrap" style="margin-bottom:.625rem;">
+      <div class="bar-lr"><span class="bar-lbl">Monthly target progress</span><span class="bar-pct" id="tgt-pct">0 / 5</span></div>
+      <div class="bar-track"><div class="bar-fill" id="tgt-fill" style="width:0%;background:#378add;"></div></div>
+      <div class="bar-sub"><span id="tgt-done">0 this month</span><span id="tgt-lbl">target: 5</span></div>
+    </div>
+    <div class="bar-wrap" style="margin-bottom:0;">
+      <div class="bar-lr"><span class="bar-lbl">Overall win rate (decided tenders)</span><span class="bar-pct" id="wr-pct">—</span></div>
+      <div class="bar-track"><div class="bar-fill" id="wr-fill" style="width:0%;background:#639922;"></div></div>
+      <div class="bar-sub"><span id="wr-won">0 won</span><span id="wr-lost">0 lost</span></div>
+    </div>
+  </div>
+
+  <div id="alerts"></div>
+
+  <div class="card" id="weekCard" style="display:none;">
+    <div class="sec-title" id="weekTitle" style="margin-bottom:10px;">Weekly breakdown</div>
+    <div class="week-grid" id="weekGrid"></div>
+    <div style="position:relative;width:100%;height:170px;margin-top:.875rem;">
+      <canvas id="weekChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:10px;">Win rate by value bracket</div>
+    <div id="brackets"></div>
+  </div>
+
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:10px;">Performance by sector</div>
+    <div class="sector-grid" id="sectorGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="sec-hdr"><span class="sec-title" id="chartTitle">Submissions by month</span></div>
+    <div class="legend">
+      <span><span class="leg-sq" style="background:#378add;"></span>Submitted</span>
+      <span><span class="leg-sq" style="background:#639922;"></span>Won</span>
+      <span><span class="leg-sq" style="background:#e24b4a;"></span>Lost</span>
+      <span><span class="leg-sq" style="background:#ba7517;"></span>Pending</span>
+    </div>
+    <div style="position:relative;width:100%;height:210px;"><canvas id="mainChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="sec-hdr">
+      <span class="sec-title">All submissions <span id="flbl" style="font-weight:400;color:var(--tx2);"></span></span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <select id="secFilter" onchange="render()"><option value="all">All sectors</option></select>
+        <select id="stFilter" onchange="render()">
+          <option value="all">All statuses</option>
+          <option value="Submitted">Submitted</option>
+          <option value="Pending">Pending</option>
+          <option value="Won">Won</option>
+          <option value="Lost">Lost</option>
+          <option value="follow-up">Follow-up due</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <colgroup><col style="width:22%"><col style="width:14%"><col style="width:12%"><col style="width:11%"><col style="width:11%"><col style="width:19%"><col style="width:11%"></colgroup>
+        <thead><tr><th>Tender name</th><th>Client</th><th>Value</th><th>Status</th><th>Sector</th><th>Submitted</th><th>Actions</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const SK = 'tenders_v5';
+const MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const BRACKETS = [
+  {l:'<₹1L',min:0,max:1e5},
+  {l:'₹1L–10L',min:1e5,max:1e6},
+  {l:'₹10L–1Cr',min:1e6,max:1e7},
+  {l:'₹1Cr–10Cr',min:1e7,max:1e8},
+  {l:'>₹10Cr',min:1e8,max:Infinity},
+];
+
+let T = [], editIdx = null, noteIdx = null, delIdx = null;
+let mainChart = null, weekChart = null;
+
+// Load data
+try { const r = localStorage.getItem(SK); if (r) T = JSON.parse(r); } catch(e) {}
+if (!T.length) try { const r = localStorage.getItem('tenders_v4'); if (r) T = JSON.parse(r); } catch(e) {}
+if (!T.length) try { const r = localStorage.getItem('tenders_v3'); if (r) T = JSON.parse(r); } catch(e) {}
+if (!T.length) {
+  T = [
+    {name:'Urban drainage upgrade',client:'City Council',value:8500000,currency:'INR',date:'2025-01-15',status:'Won',sector:'WASH',notes:''},
+    {name:'School renovation phase 2',client:'Dept of Education',value:6200000,currency:'INR',date:'2025-02-08',status:'Lost',sector:'Education & Skills',notes:'Lost on price'},
+    {name:'Bridge maintenance contract',client:'Roads Authority',value:25000000,currency:'INR',date:'2025-03-20',status:'Submitted',sector:'Infrastructure & Transportation',notes:''},
+    {name:'Hospital supply agreement',client:'Health Board',value:4500000,currency:'INR',date:'2025-04-05',status:'Pending',sector:'Health & Nutrition',notes:'Awaiting procurement board'},
+    {name:'Port facility upgrade',client:'Maritime Authority',value:38000000,currency:'INR',date:'2025-05-01',status:'Won',sector:'Infrastructure & Transportation',notes:''},
+    {name:'IT infrastructure rollout',client:'Revenue Service',value:7200000,currency:'INR',date:'2025-05-12',status:'Submitted',sector:'Digi-Tech',notes:''},
+    {name:'Waste management services',client:'Metro Council',value:3200000,currency:'INR',date:'2025-06-03',status:'Pending',sector:'Livelihoods',notes:''},
+    {name:'Solar panel installation',client:'Energy Corp',value:16000000,currency:'INR',date:'2025-07-18',status:'Won',sector:'Clean Energy',notes:''},
+    {name:'Library construction',client:'Arts & Culture Dept',value:13000000,currency:'INR',date:'2025-08-22',status:'Lost',sector:'Infrastructure & Transportation',notes:''},
+    {name:'Water treatment plant',client:'Utilities Board',value:55000000,currency:'INR',date:'2025-09-10',status:'Submitted',sector:'WASH',notes:''},
+    {name:'Road resurfacing lot 4',client:'Transport Dept',value:2300000,currency:'INR',date:'2025-10-05',status:'Pending',sector:'Infrastructure & Transportation',notes:'Follow up with officer'},
+    {name:'Airport terminal fit-out',client:'Aviation Authority',value:88000000,currency:'INR',date:'2025-11-14',status:'Won',sector:'Infrastructure & Transportation',notes:''},
+    {name:'Park landscaping contract',client:'Parks Board',value:1400000,currency:'INR',date:'2025-12-01',status:'Submitted',sector:'Livelihoods',notes:''},
+    {name:'Telecoms network upgrade',client:'Comms Agency',value:32000000,currency:'INR',date:'2026-01-09',status:'Pending',sector:'Digi-Tech',notes:'Decision expected end of Feb'},
+    {name:'Railway station refurb',client:'Rail Authority',value:50000000,currency:'INR',date:'2026-02-20',status:'Submitted',sector:'Infrastructure & Transportation',notes:''},
+    {name:'Community health center',client:'District Council',value:21000000,currency:'INR',date:'2026-03-15',status:'Won',sector:'Health & Nutrition',notes:''},
+    {name:'Flood barrier installation',client:'Environment Dept',value:24000000,currency:'INR',date:'2026-04-02',status:'Lost',sector:'WASH',notes:''},
+    {name:'Public housing phase 3',client:'Housing Authority',value:65000000,currency:'INR',date:'2026-05-10',status:'Pending',sector:'Infrastructure & Transportation',notes:''},
+  ];
+}
+
+function save() { try { localStorage.setItem(SK, JSON.stringify(T)); } catch(e) { alert('Storage error.'); } }
+
+function fmt(v, cur) {
+  if (!v && v !== 0) return '—';
+  const n = Number(v); if (isNaN(n) || n === 0) return '—';
+  const s = {INR:'₹',USD:'$',EUR:'€',GBP:'£',ZAR:'R',KES:'KSh',NGN:'₦',GHS:'₵',AED:'AED '}[cur] || '';
+  if (cur === 'INR') {
+    if (n >= 1e7) return s + (n/1e7).toFixed(1) + 'Cr';
+    if (n >= 1e5) return s + (n/1e5).toFixed(1) + 'L';
+    if (n >= 1e3) return s + (n/1e3).toFixed(1) + 'K';
+    return s + n.toLocaleString('en-IN');
+  }
+  if (n >= 1e6) return s + (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return s + (n/1e3).toFixed(1) + 'K';
+  return s + n.toLocaleString();
+}
+
+function daysAgo(ds) { return Math.floor((Date.now() - new Date(ds).getTime()) / 864e5); }
+function isOverdue(t) { return (t.status==='Submitted'||t.status==='Pending') && daysAgo(t.date) >= 30; }
+function weekStart() { const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()); return d; }
+function years() { const y=[...new Set(T.map(t=>t.date.slice(0,4)))].sort().reverse(); if (!y.length) y.push(String(new Date().getFullYear())); return y; }
+
+function set(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+function style(id, prop, val) { const el=document.getElementById(id); if(el) el.style[prop]=val; }
+
+function render() {
+  // Year filter
+  const ySel = document.getElementById('yearFilter');
+  const yrs = years();
+  if (!ySel.innerHTML || ySel.options.length !== yrs.length) {
+    const cur = ySel.value;
+    ySel.innerHTML = yrs.map(y=>`<option value="${y}">${y}</option>`).join('');
+    if (cur && yrs.includes(cur)) ySel.value = cur;
+  }
+  const selY = ySel.value || yrs[0];
+
+  // Month filter
+  const mSel = document.getElementById('monthFilter');
+  const selMV = mSel.value;
+  const selM = selMV === 'all' ? null : parseInt(selMV);
+
+  // Sector filter
+  const secSel = document.getElementById('secFilter');
+  const secs = [...new Set(T.map(t=>t.sector).filter(Boolean))].sort();
+  const curSec = secSel.value;
+  secSel.innerHTML = '<option value="all">All sectors</option>' + secs.map(s=>`<option value="${s}">${s}</option>`).join('');
+  if (curSec && secs.includes(curSec)) secSel.value = curSec;
+  const selSec = secSel.value;
+  const selSt = document.getElementById('stFilter').value;
+
+  const now = new Date();
+  const ws = weekStart();
+  const tM = now.getMonth(), tY = now.getFullYear();
+
+  let week=0, curMo=0, yearCt=0, won=0, lost=0, fu=0, yVal=0, wonVal=0, pipe=0;
+  T.forEach(t => {
+    const d = new Date(t.date);
+    if (d >= ws) week++;
+    if (d.getFullYear()===tY && d.getMonth()===tM) curMo++;
+    if (d.getFullYear()===tY) { yearCt++; if(t.value) yVal+=Number(t.value); }
+    if (t.status==='Won') { won++; if(t.value) wonVal+=Number(t.value); }
+    if (t.status==='Lost') lost++;
+    if (isOverdue(t)) fu++;
+    if ((t.status==='Submitted'||t.status==='Pending') && t.value) pipe+=Number(t.value);
+  });
+
+  let dispMo = curMo, moLbl = 'This month';
+  if (selM !== null) {
+    dispMo = T.filter(t=>t.date.slice(0,4)===selY && parseInt(t.date.slice(5,7))-1===selM).length;
+    moLbl = MN[selM];
+    yearCt = T.filter(t=>t.date.slice(0,4)===selY).length;
+  }
+
+  set('m-week', week); set('m-month', dispMo); set('m-year', yearCt); set('m-fu', fu);
+
+  // Submitted this month: tenders submitted (date) in current calendar month
+  const subThisMo = T.filter(t => {
+    const d = new Date(t.date);
+    return d.getFullYear() === tY && d.getMonth() === tM;
+  }).length;
+  set('m-sub-mo', subThisMo);
+  set('m-sub-mo-sub', MN[tM].slice(0,3) + ' ' + tY);
+
+  // Total: all tenders ever recorded
+  set('m-total', T.length);
+  set('m-month-lbl', moLbl); set('m-year-lbl', selY);
+  // Total value of all tenders submitted in current calendar month
+  const moVal = T.filter(t => { const d=new Date(t.date); return d.getFullYear()===tY && d.getMonth()===tM && t.value; }).reduce((s,t)=>s+Number(t.value),0);
+  set('m-pipe', moVal > 0 ? fmt(moVal,'INR') : '—');
+  set('m-pipe-sub', MN[tM].slice(0,3) + ' ' + tY);
+  const anyYV = T.filter(t=>t.date.slice(0,4)===String(tY)&&t.value).length > 0;
+  set('m-val', anyYV ? fmt(yVal,'INR') : '—'); set('m-val-sub', anyYV ? 'submitted this year' : '');
+  const dec = won+lost, wr = dec > 0 ? Math.round(won/dec*100) : null;
+  set('m-wr', wr!==null ? wr+'%' : '—'); set('m-wr-sub', dec > 0 ? dec+' decided' : 'no results yet');
+  set('m-wonval', wonVal > 0 ? fmt(wonVal,'INR') : '—');
+  style('wr-fill','width',(wr||0)+'%'); set('wr-pct', wr!==null ? wr+'%' : '—');
+  set('wr-won', won+' won'); set('wr-lost', lost+' lost');
+
+  const tgt = Math.max(1, parseInt(document.getElementById('tgt').value)||5);
+  const tp = Math.min(100, Math.round(curMo/tgt*100));
+  style('tgt-fill','width',tp+'%'); style('tgt-fill','background',tp>=100?'#639922':'#378add');
+  set('tgt-pct',`${curMo} / ${tgt}`); set('tgt-done',`${curMo} this month`); set('tgt-lbl',`target: ${tgt}`);
+  const ts = document.getElementById('tgt-status');
+  if(ts){ ts.textContent = tp>=100 ? '✓ Target met!' : curMo>0 ? `${tgt-curMo} to go` : ''; ts.style.color = tp>=100?'#3b6d11':'var(--tx2)'; }
+
+  // Alerts
+  const od = T.filter(isOverdue).sort((a,b)=>daysAgo(b.date)-daysAgo(a.date));
+  const odAll = T.filter(isOverdue);
+  const odPending = odAll.filter(t=>!t.followedUp);
+  document.getElementById('alerts').innerHTML = odAll.length ? `<div class="alert-box">
+    <div class="alert-title"><i class="ti ti-bell"></i> Follow-up reminders — ${odPending.length} pending, ${odAll.filter(t=>t.followedUp).length} done</div>
+    ${odAll.sort((a,b)=>daysAgo(b.date)-daysAgo(a.date)).map((t,_,arr)=>{
+      const ri=T.indexOf(t);
+      const done=!!t.followedUp;
+      return `<div class="alert-item" style="${done?'opacity:0.6;':''}">
+        <span class="${done?'fu-done':''}">${t.name} <span style="color:#ba7517;font-size:11px;">· ${t.client}</span></span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;font-weight:500;">${daysAgo(t.date)}d</span>
+          <button class="tick-btn ${done?'done':''}" onclick="toggleFollowUp(${ri})" title="${done?'Mark as not followed up':'Mark as followed up'}">${done?'✓ Done':'Follow up'}</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>` : '';
+
+  // Weekly card
+  const wc = document.getElementById('weekCard');
+  if (selM !== null) {
+    wc.style.display = 'block';
+    set('weekTitle', `Weekly breakdown — ${MN[selM]} ${selY}`);
+    const mt = T.filter(t=>t.date.slice(0,4)===selY && parseInt(t.date.slice(5,7))-1===selM);
+    const wks = [{l:'Week 1 (1–7)',a:1,b:7},{l:'Week 2 (8–14)',a:8,b:14},{l:'Week 3 (15–21)',a:15,b:21},{l:'Week 4 (22–28)',a:22,b:28},{l:'Week 5 (29+)',a:29,b:31}];
+    const wd = wks.map(w=>{ const wt=mt.filter(t=>{const d=parseInt(t.date.slice(8,10));return d>=w.a&&d<=w.b;}); return {l:w.l,ct:wt.length,v:wt.reduce((s,t)=>s+(t.value?Number(t.value):0),0)}; });
+    document.getElementById('weekGrid').innerHTML = wd.map(w=>`<div class="week-card"><div class="week-lbl">${w.l}</div><div class="week-ct">${w.ct}</div><div class="week-val">${w.v>0?fmt(w.v,'INR'):'No value recorded'}</div></div>`).join('');
+    const wCtx = document.getElementById('weekChart');
+    if (weekChart) weekChart.destroy();
+    weekChart = new Chart(wCtx,{type:'bar',data:{labels:wd.map(w=>w.l.split(' (')[0]),datasets:[{label:'Tenders',data:wd.map(w=>w.ct),backgroundColor:'#378add',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(128,128,128,0.08)'}}}}});
+  } else {
+    wc.style.display = 'none';
+    if (weekChart) { weekChart.destroy(); weekChart = null; }
+  }
+
+  // Brackets
+  document.getElementById('brackets').innerHTML = BRACKETS.map(b=>{
+    const inB = T.filter(t=>t.value&&Number(t.value)>=b.min&&Number(t.value)<b.max);
+    const bw=inB.filter(t=>t.status==='Won').length, bl=inB.filter(t=>t.status==='Lost').length, bd=bw+bl;
+    const bwr = bd>0 ? Math.round(bw/bd*100) : null;
+    return `<div class="bracket-row"><span class="bracket-lbl">${b.l}</span><div class="bracket-track"><div class="bracket-fill" style="width:${bwr||0}%;"></div></div><span class="bracket-pct">${bwr!==null?bwr+'%':'—'}</span><span class="bracket-ct">${bd>0?bd+' dec':'no data'}</span></div>`;
+  }).join('');
+
+  // Sectors
+  document.getElementById('sectorGrid').innerHTML = secs.length ? secs.map(s=>{
+    const st=T.filter(t=>t.sector===s), sw=st.filter(t=>t.status==='Won').length, sl=st.filter(t=>t.status==='Lost').length, sd=sw+sl;
+    const swr = sd>0 ? Math.round(sw/sd*100) : null;
+    return `<div class="sector-card"><div class="sector-name">${s}</div><div class="sector-stat">${st.length} tender${st.length!==1?'s':''}</div><div class="sector-wr">${swr!==null?swr+'% win rate':'no results yet'}</div></div>`;
+  }).join('') : '<p style="font-size:12px;color:var(--tx3);">Add tenders with sectors to see performance.</p>';
+
+
+  // Main chart
+  const mCtx = document.getElementById('mainChart');
+  if (mainChart) mainChart.destroy();
+  if (selM !== null) {
+    set('chartTitle', `Daily submissions — ${MN[selM]} ${selY}`);
+    const dim = new Date(parseInt(selY),selM+1,0).getDate();
+    const days = Array.from({length:dim},(_,i)=>i+1);
+    const mt = T.filter(t=>t.date.slice(0,4)===selY && parseInt(t.date.slice(5,7))-1===selM);
+    const dc = {Submitted:new Array(dim).fill(0),Won:new Array(dim).fill(0),Lost:new Array(dim).fill(0),Pending:new Array(dim).fill(0)};
+    mt.forEach(t=>{const d=parseInt(t.date.slice(8,10))-1;if(dc[t.status])dc[t.status][d]++;});
+    mainChart = new Chart(mCtx,{type:'bar',data:{labels:days,datasets:[{label:'Submitted',data:dc.Submitted,backgroundColor:'#378add',borderSkipped:false},{label:'Won',data:dc.Won,backgroundColor:'#639922',borderSkipped:false},{label:'Lost',data:dc.Lost,backgroundColor:'#e24b4a',borderSkipped:false},{label:'Pending',data:dc.Pending,backgroundColor:'#ba7517',borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{font:{size:9},maxTicksLimit:15},grid:{display:false}},y:{stacked:true,ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(128,128,128,0.08)'}}}}});
+  } else {
+    set('chartTitle','Submissions by month');
+    const ct = {Submitted:new Array(12).fill(0),Won:new Array(12).fill(0),Lost:new Array(12).fill(0),Pending:new Array(12).fill(0)};
+    T.filter(t=>t.date.slice(0,4)===selY).forEach(t=>{const m=parseInt(t.date.slice(5,7))-1;if(ct[t.status])ct[t.status][m]++;});
+    mainChart = new Chart(mCtx,{type:'bar',data:{labels:MS,datasets:[{label:'Submitted',data:ct.Submitted,backgroundColor:'#378add',borderSkipped:false},{label:'Won',data:ct.Won,backgroundColor:'#639922',borderSkipped:false},{label:'Lost',data:ct.Lost,backgroundColor:'#e24b4a',borderSkipped:false},{label:'Pending',data:ct.Pending,backgroundColor:'#ba7517',borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{font:{size:10},autoSkip:false},grid:{display:false}},y:{stacked:true,ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(128,128,128,0.08)'}}}}});
+  }
+
+  // Table
+  let filtered = T.filter(t=>t.date.slice(0,4)===selY);
+  if (selM !== null) filtered = filtered.filter(t=>parseInt(t.date.slice(5,7))-1===selM);
+  if (selSt==='follow-up') filtered=filtered.filter(isOverdue);
+  else if (selSt!=='all') filtered=filtered.filter(t=>t.status===selSt);
+  if (selSec!=='all') filtered=filtered.filter(t=>t.sector===selSec);
+  filtered = filtered.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const fl=[]; if(selM!==null)fl.push(MN[selM]); fl.push(selY);
+  set('flbl', fl.length ? '— '+fl.join(', ') : '');
+
+  const tbody = document.getElementById('tbody');
+  if (!filtered.length) { tbody.innerHTML='<tr><td colspan="7" class="empty">No tenders found for this period</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(t=>{
+    const ri = T.indexOf(t);
+    const cls = {Won:'b-won',Lost:'b-lost',Pending:'b-pending',Submitted:'b-submitted'}[t.status]||'b-submitted';
+    const df = new Date(t.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    const dl = isOverdue(t) ? `<span class="badge b-overdue">${daysAgo(t.date)}d — follow up!</span>` : df;
+    const hn = t.notes && t.notes.trim().length > 0;
+    return `<tr>
+      <td title="${t.name}">${t.name}</td>
+      <td title="${t.client||'—'}">${t.client||'—'}</td>
+      <td>${t.value ? fmt(t.value, t.currency||'INR') : '—'}</td>
+      <td><span class="badge ${cls}">${t.status}</span></td>
+      <td>${t.sector||'—'}</td>
+      <td>${dl}</td>
+      <td><div class="act-cell">
+        <i class="ti ti-pencil act-icon edit" title="Edit" onclick="openEdit(${ri})"></i>
+        <i class="ti ti-trash act-icon del" title="Delete" onclick="openDel(${ri})"></i>
+        <i class="ti ti-notes act-icon note ${hn?'has':''}" title="${hn?'View/edit note':'Add note'}" onclick="openNote(${ri})"></i>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ADD
+function openAdd() {
+  ['a-name','a-client','a-value','a-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const ad=document.getElementById('a-date'); if(ad) ad.valueAsDate=new Date();
+  const as=document.getElementById('a-sector'); if(as) as.value='';
+  const ast=document.getElementById('a-status'); if(ast) ast.value='Submitted';
+  const ac=document.getElementById('a-currency'); if(ac) ac.value='INR';
+  document.getElementById('addModal').classList.add('open');
+}
+function closeAdd() { document.getElementById('addModal').classList.remove('open'); }
+function saveTender() {
+  const name=(document.getElementById('a-name').value||'').trim();
+  const date=document.getElementById('a-date').value;
+  if (!name||!date) { alert('Please fill in the tender name and submission date.'); return; }
+  T.push({ name, client:(document.getElementById('a-client').value||'').trim()||'—', value:document.getElementById('a-value').value?Number(document.getElementById('a-value').value):null, currency:document.getElementById('a-currency').value, date, status:document.getElementById('a-status').value, sector:document.getElementById('a-sector').value||'', notes:(document.getElementById('a-notes').value||'').trim() });
+  save(); closeAdd(); document.getElementById('yearFilter').innerHTML=''; render();
+}
+
+// EDIT
+function openEdit(idx) {
+  editIdx = idx; const t = T[idx];
+  document.getElementById('e-name').value = t.name||'';
+  document.getElementById('e-client').value = t.client==='—'?'':t.client||'';
+  document.getElementById('e-value').value = t.value||'';
+  document.getElementById('e-currency').value = t.currency||'INR';
+  document.getElementById('e-date').value = t.date||'';
+  document.getElementById('e-status').value = t.status||'Submitted';
+  document.getElementById('e-sector').value = t.sector||'';
+  document.getElementById('e-notes').value = t.notes||'';
+  document.getElementById('editModal').classList.add('open');
+}
+function closeEdit() { document.getElementById('editModal').classList.remove('open'); editIdx=null; }
+function updateTender() {
+  if (editIdx===null) return;
+  const name=(document.getElementById('e-name').value||'').trim();
+  const date=document.getElementById('e-date').value;
+  if (!name||!date) { alert('Please fill in the tender name and date.'); return; }
+  T[editIdx] = { ...T[editIdx], name, client:(document.getElementById('e-client').value||'').trim()||'—', value:document.getElementById('e-value').value?Number(document.getElementById('e-value').value):null, currency:document.getElementById('e-currency').value, date, status:document.getElementById('e-status').value, sector:document.getElementById('e-sector').value||'', notes:(document.getElementById('e-notes').value||'').trim() };
+  save(); closeEdit(); render();
+}
+
+// NOTE
+function openNote(idx) {
+  noteIdx = idx;
+  const el=document.getElementById('noteName'); if(el) el.textContent=T[idx].name;
+  const nt=document.getElementById('n-text'); if(nt) nt.value=T[idx].notes||'';
+  document.getElementById('noteModal').classList.add('open');
+}
+function closeNote() { document.getElementById('noteModal').classList.remove('open'); noteIdx=null; }
+function saveNote() {
+  if (noteIdx===null) return;
+  T[noteIdx].notes = (document.getElementById('n-text').value||'').trim();
+  save(); closeNote(); render();
+}
+
+// DELETE
+function openDel(idx) {
+  delIdx=idx;
+  const dn=document.getElementById('delName'); if(dn) dn.textContent=T[idx].name;
+  document.getElementById('delModal').classList.add('open');
+}
+function closeDel() { document.getElementById('delModal').classList.remove('open'); delIdx=null; }
+function confirmDel() {
+  if (delIdx===null) return;
+  T.splice(delIdx,1); save(); closeDel();
+  document.getElementById('yearFilter').innerHTML=''; render();
+}
+
+// CLEAR
+function openClear() { document.getElementById('clearModal').classList.add('open'); }
+function closeClear() { document.getElementById('clearModal').classList.remove('open'); }
+function confirmClear() { T=[]; save(); closeClear(); document.getElementById('yearFilter').innerHTML=''; render(); }
+
+// TOGGLE FOLLOW-UP
+function toggleFollowUp(idx) {
+  T[idx].followedUp = !T[idx].followedUp;
+  save(); render();
+}
+
+// EXPORT DATA (JSON)
+function exportData() {
+  const json = JSON.stringify({version:'v5', exported: new Date().toISOString(), tenders: T}, null, 2);
+  try {
+    const blob = new Blob([json], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='tender_data.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  } catch(e) {
+    // Fallback: open in new tab — user can Ctrl+S / Cmd+S to save
+    const w = window.open('', '_blank');
+    w.document.write('<pre>' + json.replace(/</g,'&lt;') + '</pre>');
+    w.document.title = 'tender_data.json — right-click > Save As to download';
+    alert('Your browser blocked direct download. In the new tab that opened, press Ctrl+S (or Cmd+S) to save the file as tender_data.json');
+  }
+}
+
+// IMPORT DATA (JSON)
+function importData(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const incoming = parsed.tenders || parsed; // support both formats
+      if (!Array.isArray(incoming)) { alert('Invalid data file.'); return; }
+      if (!confirm(`This will replace your current ${T.length} tender(s) with ${incoming.length} tender(s) from the file. Continue?`)) return;
+      T = incoming; save();
+      document.getElementById('yearFilter').innerHTML = '';
+      render();
+      alert(`Successfully imported ${T.length} tenders!`);
+    } catch(err) { alert('Could not read file. Make sure it is a valid tender data JSON file.'); }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// EXPORT CSV
+function exportCSV() {
+  const h=['Tender name','Client','Value','Currency','Date submitted','Status','Sector','Days since submission','Follow-up due','Notes'];
+  const rows=T.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(t=>[`"${(t.name||'').replace(/"/g,'""')}"`,`"${(t.client||'').replace(/"/g,'""')}"`,t.value||'',t.currency||'',t.date,t.status,t.sector||'',daysAgo(t.date),isOverdue(t)?'Yes':'No',`"${(t.notes||'').replace(/"/g,'""')}"`].join(','));
+  const csv=[h.join(','),...rows].join('\n');
+  try {
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='tender_submissions.csv';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  } catch(e) {
+    // Fallback: open in new tab
+    const w = window.open('', '_blank');
+    w.document.write('<pre>' + csv.replace(/</g,'&lt;') + '</pre>');
+    w.document.title = 'tender_submissions.csv — Ctrl+S to save';
+    alert('Your browser blocked direct download. In the new tab that opened, press Ctrl+S (or Cmd+S) to save the file as tender_submissions.csv');
+  }
+}
+
+// INIT
+function init() {
+  try { document.getElementById('monthFilter').value=String(new Date().getMonth()); } catch(e){}
+  try { document.getElementById('a-date').valueAsDate=new Date(); } catch(e){}
+  render();
+}
+if (document.readyState==='loading') { document.addEventListener('DOMContentLoaded',init); } else { init(); }
+</script>
+</body>
+</html>
