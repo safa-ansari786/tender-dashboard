@@ -112,6 +112,24 @@
   .fr2 input,.fr2 select{width:100%;}
   .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:.875rem;}
   .empty{text-align:center;padding:2rem 1rem;color:var(--tx2);font-size:13px;}
+  .trend-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;}
+  .trend-month{width:32px;color:var(--tx2);flex-shrink:0;font-size:11px;}
+  .trend-bar-track{flex:1;height:6px;background:var(--bg2);border-radius:99px;overflow:hidden;}
+  .trend-bar-fill{height:100%;border-radius:99px;}
+  .trend-pct{width:30px;text-align:right;font-weight:500;font-size:11px;}
+  .trend-dec{width:38px;text-align:right;color:var(--tx3);font-size:10px;}
+  .avg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
+  .avg-card{background:var(--bg2);border-radius:var(--rm);padding:.75rem 1rem;}
+  .avg-label{font-size:11px;color:var(--tx2);margin-bottom:3px;}
+  .avg-val{font-size:18px;font-weight:500;}
+  .avg-sub{font-size:10px;color:var(--tx3);margin-top:2px;}
+  .ttd-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:.5px solid var(--bd);font-size:12px;}
+  .ttd-row:last-child{border-bottom:none;}
+  .loss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;}
+  .loss-card{background:var(--bg2);border-radius:var(--rm);padding:.625rem .875rem;}
+  .loss-name{font-size:11px;color:var(--tx2);margin-bottom:2px;}
+  .loss-ct{font-size:16px;font-weight:500;}
+  .loss-pct{font-size:10px;color:var(--tx3);margin-top:1px;}
   @media(max-width:600px){
     .wrap{padding:.875rem .875rem 3rem;}
     .topbar{padding:0 .875rem;}
@@ -185,6 +203,9 @@
       <div><label>Status</label><select id="a-status"><option>Submitted</option><option>Pending</option><option>Won</option><option>Lost</option></select></div>
     </div>
     <div class="fr"><label>Sector</label><select id="a-sector"><option value="">— select sector —</option><option>Agriculture</option><option>Forestry & Natural Resources</option><option>Clean Energy</option><option>Climate Change</option><option>Education & Skills</option><option>Livelihoods</option><option>Health & Nutrition</option><option>Women & Child Development</option><option>WASH</option><option>Infrastructure & Transportation</option><option>Digi-Tech</option><option>Social Protection & Governance</option><option>Multi-Sector</option><option>Others</option></select></div>
+    <div class="fr"><label>Contact person</label><input type="text" id="a-contact" placeholder="e.g. Priya Sharma, +91 98765 43210"></div>
+    <div class="fr"><label>Competitor(s)</label><input type="text" id="a-competitor" placeholder="e.g. XYZ Consulting, ABC Research"></div>
+    <div class="fr"><label>Reason for loss</label><select id="a-lossreason"><option value="">— select if lost —</option><option>Price too high</option><option>Technical score</option><option>Strong competition</option><option>No response from client</option><option>Scope mismatch</option><option>Other</option></select></div>
     <div class="fr"><label>Notes</label><textarea id="a-notes" placeholder="e.g. Waiting on procurement officer…"></textarea></div>
     <div class="modal-actions">
       <button class="btn" onclick="closeAdd()">Cancel</button>
@@ -208,6 +229,9 @@
       <div><label>Status</label><select id="e-status"><option>Submitted</option><option>Pending</option><option>Won</option><option>Lost</option></select></div>
     </div>
     <div class="fr"><label>Sector</label><select id="e-sector"><option value="">— select sector —</option><option>Agriculture</option><option>Forestry & Natural Resources</option><option>Clean Energy</option><option>Climate Change</option><option>Education & Skills</option><option>Livelihoods</option><option>Health & Nutrition</option><option>Women & Child Development</option><option>WASH</option><option>Infrastructure & Transportation</option><option>Digi-Tech</option><option>Social Protection & Governance</option><option>Multi-Sector</option><option>Others</option></select></div>
+    <div class="fr"><label>Contact person</label><input type="text" id="e-contact" placeholder="e.g. Priya Sharma, +91 98765 43210"></div>
+    <div class="fr"><label>Competitor(s)</label><input type="text" id="e-competitor" placeholder="e.g. XYZ Consulting, ABC Research"></div>
+    <div class="fr"><label>Reason for loss</label><select id="e-lossreason"><option value="">— select if lost —</option><option>Price too high</option><option>Technical score</option><option>Strong competition</option><option>No response from client</option><option>Scope mismatch</option><option>Other</option></select></div>
     <div class="fr"><label>Notes</label><textarea id="e-notes"></textarea></div>
     <div class="modal-actions">
       <button class="btn" onclick="closeEdit()">Cancel</button>
@@ -303,6 +327,34 @@
   <div class="card">
     <div class="sec-title" style="margin-bottom:10px;">Performance by sector</div>
     <div class="sector-grid" id="sectorGrid"></div>
+  </div>
+
+  <!-- WIN RATE TREND -->
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:10px;">Win rate trend — month by month (<span id="trendYear">—</span>)</div>
+    <div id="trendSection"></div>
+  </div>
+
+  <!-- AVERAGE TENDER VALUE -->
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:10px;">Average tender value</div>
+    <div class="avg-grid">
+      <div class="avg-card"><div class="avg-label">Avg value — Won</div><div class="avg-val" id="avg-won">—</div><div class="avg-sub" id="avg-won-sub"></div></div>
+      <div class="avg-card"><div class="avg-label">Avg value — Lost</div><div class="avg-val" id="avg-lost">—</div><div class="avg-sub" id="avg-lost-sub"></div></div>
+    </div>
+    <div style="position:relative;width:100%;height:180px;"><canvas id="avgChart"></canvas></div>
+  </div>
+
+  <!-- TIME TO DECISION -->
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:10px;">Avg. time to decision by sector <span style="font-size:11px;color:var(--tx3);">(decided tenders only)</span></div>
+    <div id="ttdSection"></div>
+  </div>
+
+  <!-- REASON FOR LOSS -->
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:10px;">Reasons for loss</div>
+    <div class="loss-grid" id="lossGrid"></div>
   </div>
 
   <div class="card">
@@ -486,12 +538,12 @@ function render() {
   style('wr-fill','width',(wr||0)+'%'); set('wr-pct', wr!==null ? wr+'%' : '—');
   set('wr-won', won+' won'); set('wr-lost', lost+' lost');
 
-  const tgt = Math.max(1, parseInt(document.getElementById('tgt').value)||5);
-  const tp = Math.min(100, Math.round(curMo/tgt*100));
+  const tgt = Math.max(1, parseInt(document.getElementById('tgt').value)||20);
+  const tp = Math.min(100, Math.round(dispMo/tgt*100));
   style('tgt-fill','width',tp+'%'); style('tgt-fill','background',tp>=100?'#639922':'#378add');
-  set('tgt-pct',`${curMo} / ${tgt}`); set('tgt-done',`${curMo} this month`); set('tgt-lbl',`target: ${tgt}`);
+  set('tgt-pct',`${dispMo} / ${tgt}`); set('tgt-done',`${dispMo} ${moLbl.toLowerCase()}`); set('tgt-lbl',`target: ${tgt}`);
   const ts = document.getElementById('tgt-status');
-  if(ts){ ts.textContent = tp>=100 ? '✓ Target met!' : curMo>0 ? `${tgt-curMo} to go` : ''; ts.style.color = tp>=100?'#3b6d11':'var(--tx2)'; }
+  if(ts){ ts.textContent = tp>=100 ? '✓ Target met!' : dispMo>0 ? `${tgt-dispMo} to go` : ''; ts.style.color = tp>=100?'#3b6d11':'var(--tx2)'; }
 
   // Alerts
   const od = T.filter(t => isOverdue(t) && !t.followedUp).sort((a,b)=>daysAgo(b.date)-daysAgo(a.date));
@@ -514,7 +566,7 @@ function render() {
   if (selM !== null) {
     wc.style.display = 'block';
     set('weekTitle', `Weekly breakdown — ${MN[selM]} ${selY}`);
-    const mt = T.filter(t=>t.date.slice(0,4)===selY && parseInt(t.date.slice(5,7))-1===selM);
+    const mt = T.filter(t=>parseInt(t.date.slice(0,4))===dispY && parseInt(t.date.slice(5,7))-1===selM);
     const wks = [{l:'Week 1 (1–7)',a:1,b:7},{l:'Week 2 (8–14)',a:8,b:14},{l:'Week 3 (15–21)',a:15,b:21},{l:'Week 4 (22–28)',a:22,b:28},{l:'Week 5 (29+)',a:29,b:31}];
     const wd = wks.map(w=>{ const wt=mt.filter(t=>{const d=parseInt(t.date.slice(8,10));return d>=w.a&&d<=w.b;}); return {l:w.l,ct:wt.length,v:wt.reduce((s,t)=>s+(t.value?Number(t.value):0),0)}; });
     document.getElementById('weekGrid').innerHTML = wd.map(w=>`<div class="week-card"><div class="week-lbl">${w.l}</div><div class="week-ct">${w.ct}</div><div class="week-val">${w.v>0?fmt(w.v,'INR'):'No value recorded'}</div></div>`).join('');
@@ -549,19 +601,90 @@ function render() {
     set('chartTitle', `Daily submissions — ${MN[selM]} ${selY}`);
     const dim = new Date(parseInt(selY),selM+1,0).getDate();
     const days = Array.from({length:dim},(_,i)=>i+1);
-    const mt = T.filter(t=>t.date.slice(0,4)===selY && parseInt(t.date.slice(5,7))-1===selM);
+    const mt = T.filter(t=>parseInt(t.date.slice(0,4))===dispY && parseInt(t.date.slice(5,7))-1===selM);
     const dc = {Submitted:new Array(dim).fill(0),Won:new Array(dim).fill(0),Lost:new Array(dim).fill(0),Pending:new Array(dim).fill(0)};
     mt.forEach(t=>{const d=parseInt(t.date.slice(8,10))-1;if(dc[t.status])dc[t.status][d]++;});
     mainChart = new Chart(mCtx,{type:'bar',data:{labels:days,datasets:[{label:'Submitted',data:dc.Submitted,backgroundColor:'#378add',borderSkipped:false},{label:'Won',data:dc.Won,backgroundColor:'#639922',borderSkipped:false},{label:'Lost',data:dc.Lost,backgroundColor:'#e24b4a',borderSkipped:false},{label:'Pending',data:dc.Pending,backgroundColor:'#ba7517',borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{font:{size:9},maxTicksLimit:15},grid:{display:false}},y:{stacked:true,ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(128,128,128,0.08)'}}}}});
   } else {
     set('chartTitle','Submissions by month');
     const ct = {Submitted:new Array(12).fill(0),Won:new Array(12).fill(0),Lost:new Array(12).fill(0),Pending:new Array(12).fill(0)};
-    T.filter(t=>t.date.slice(0,4)===selY).forEach(t=>{const m=parseInt(t.date.slice(5,7))-1;if(ct[t.status])ct[t.status][m]++;});
+    T.filter(t=>parseInt(t.date.slice(0,4))===dispY).forEach(t=>{const m=parseInt(t.date.slice(5,7))-1;if(ct[t.status])ct[t.status][m]++;});
     mainChart = new Chart(mCtx,{type:'bar',data:{labels:MS,datasets:[{label:'Submitted',data:ct.Submitted,backgroundColor:'#378add',borderSkipped:false},{label:'Won',data:ct.Won,backgroundColor:'#639922',borderSkipped:false},{label:'Lost',data:ct.Lost,backgroundColor:'#e24b4a',borderSkipped:false},{label:'Pending',data:ct.Pending,backgroundColor:'#ba7517',borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{font:{size:10},autoSkip:false},grid:{display:false}},y:{stacked:true,ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(128,128,128,0.08)'}}}}});
   }
 
   // Table
-  let filtered = T.filter(t=>t.date.slice(0,4)===selY);
+  // ── WIN RATE TREND ──────────────────────────────────────
+  const trendEl = document.getElementById('trendSection');
+  const trendYrEl = document.getElementById('trendYear');
+  if(trendYrEl) trendYrEl.textContent = selY;
+  if(trendEl) {
+    trendEl.innerHTML = MS.map((mn, mi) => {
+      const mT = T.filter(t=>parseInt(t.date.slice(0,4))===dispY && parseInt(t.date.slice(5,7))-1===mi);
+      const mW = mT.filter(t=>t.status==='Won').length;
+      const mL = mT.filter(t=>t.status==='Lost').length;
+      const mD = mW+mL;
+      const mWr = mD>0 ? Math.round(mW/mD*100) : null;
+      const color = mWr===null ? 'var(--tx3)' : mWr>=50 ? '#639922' : mWr>=25 ? '#378add' : '#e24b4a';
+      return `<div class="trend-row">
+        <span class="trend-month">${mn.slice(0,3)}</span>
+        <div class="trend-bar-track"><div class="trend-bar-fill" style="width:${mWr||0}%;background:${color};"></div></div>
+        <span class="trend-pct" style="color:${color}">${mWr!==null?mWr+'%':'—'}</span>
+        <span class="trend-dec">${mD>0?mD+' dec':'—'}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // ── AVERAGE TENDER VALUE ─────────────────────────────────
+  const wonWithVal = T.filter(t=>t.status==='Won'&&t.value);
+  const lostWithVal = T.filter(t=>t.status==='Lost'&&t.value);
+  const avgWon = wonWithVal.length ? Math.round(wonWithVal.reduce((s,t)=>s+Number(t.value),0)/wonWithVal.length) : null;
+  const avgLost = lostWithVal.length ? Math.round(lostWithVal.reduce((s,t)=>s+Number(t.value),0)/lostWithVal.length) : null;
+  set('avg-won', avgWon ? fmt(avgWon,'INR') : '—');
+  set('avg-won-sub', wonWithVal.length ? wonWithVal.length+' won tenders' : 'no data');
+  set('avg-lost', avgLost ? fmt(avgLost,'INR') : '—');
+  set('avg-lost-sub', lostWithVal.length ? lostWithVal.length+' lost tenders' : 'no data');
+  const avgCtx = document.getElementById('avgChart');
+  if(avgCtx) {
+    if(window._avgChart) window._avgChart.destroy();
+    const secNames = [...new Set(T.filter(t=>t.sector&&t.value&&(t.status==='Won'||t.status==='Lost')).map(t=>t.sector))].sort();
+    const wonAvgs = secNames.map(s=>{ const st=T.filter(t=>t.sector===s&&t.status==='Won'&&t.value); return st.length?Math.round(st.reduce((a,t)=>a+Number(t.value),0)/st.length):0; });
+    const lostAvgs = secNames.map(s=>{ const st=T.filter(t=>t.sector===s&&t.status==='Lost'&&t.value); return st.length?Math.round(st.reduce((a,t)=>a+Number(t.value),0)/st.length):0; });
+    window._avgChart = new Chart(avgCtx,{type:'bar',data:{labels:secNames.map(s=>s.length>12?s.slice(0,12)+'…':s),datasets:[{label:'Won',data:wonAvgs,backgroundColor:'#639922'},{label:'Lost',data:lostAvgs,backgroundColor:'#e24b4a'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10}}}},scales:{x:{ticks:{font:{size:9}},grid:{display:false}},y:{ticks:{font:{size:9},callback:v=>v>=1e7?'₹'+(v/1e7).toFixed(1)+'Cr':v>=1e5?'₹'+(v/1e5).toFixed(0)+'L':'₹'+v},grid:{color:'rgba(128,128,128,0.08)'}}}}});
+  }
+
+  // ── TIME TO DECISION ─────────────────────────────────────
+  const ttdEl = document.getElementById('ttdSection');
+  if(ttdEl) {
+    const decidedT = T.filter(t=>(t.status==='Won'||t.status==='Lost')&&t.date&&t.decisionDate);
+    const secList = [...new Set(T.filter(t=>t.sector&&(t.status==='Won'||t.status==='Lost')).map(t=>t.sector))].sort();
+    if(secList.length) {
+      ttdEl.innerHTML = secList.map(s=>{
+        const st = T.filter(t=>t.sector===s&&(t.status==='Won'||t.status==='Lost')&&t.date);
+        const avgDays = Math.round(st.reduce((a,t)=>a+daysAgo(t.date),0)/st.length);
+        const color = avgDays>90?'#e24b4a':avgDays>45?'#ba7517':'#639922';
+        return `<div class="ttd-row"><span style="font-weight:500;">${s}</span><span style="color:${color};font-weight:500;">~${avgDays} days avg</span></div>`;
+      }).join('');
+    } else {
+      ttdEl.innerHTML = '<p style="font-size:12px;color:var(--tx3);">No decided tenders yet.</p>';
+    }
+  }
+
+  // ── REASON FOR LOSS ──────────────────────────────────────
+  const lossEl = document.getElementById('lossGrid');
+  if(lossEl) {
+    const lostAll = T.filter(t=>t.status==='Lost');
+    const reasons = {};
+    lostAll.forEach(t=>{ const r=t.lossReason||'Not specified'; reasons[r]=(reasons[r]||0)+1; });
+    const total = lostAll.length;
+    lossEl.innerHTML = total ? Object.entries(reasons).sort((a,b)=>b[1]-a[1]).map(([r,ct])=>`
+      <div class="loss-card">
+        <div class="loss-name">${r}</div>
+        <div class="loss-ct">${ct}</div>
+        <div class="loss-pct">${Math.round(ct/total*100)}% of losses</div>
+      </div>`).join('') : '<p style="font-size:12px;color:var(--tx3);">No lost tenders yet.</p>';
+  }
+
+  let filtered = T.filter(t=>parseInt(t.date.slice(0,4))===dispY);
   if (selM !== null) filtered = filtered.filter(t=>parseInt(t.date.slice(5,7))-1===selM);
   if (selSt==='follow-up') filtered=filtered.filter(isOverdue);
   else if (selSt!=='all') filtered=filtered.filter(t=>t.status===selSt);
@@ -596,7 +719,8 @@ function render() {
 
 // ADD
 function openAdd() {
-  ['a-name','a-client','a-value','a-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['a-name','a-client','a-value','a-notes','a-contact','a-competitor'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const alr=document.getElementById('a-lossreason'); if(alr) alr.value='';
   const ad=document.getElementById('a-date'); if(ad) ad.valueAsDate=new Date();
   const as=document.getElementById('a-sector'); if(as) as.value='';
   const ast=document.getElementById('a-status'); if(ast) ast.value='Submitted';
@@ -608,7 +732,7 @@ function saveTender() {
   const name=(document.getElementById('a-name').value||'').trim();
   const date=document.getElementById('a-date').value;
   if (!name||!date) { alert('Please fill in the tender name and submission date.'); return; }
-  T.push({ name, client:(document.getElementById('a-client').value||'').trim()||'—', value:document.getElementById('a-value').value?Number(document.getElementById('a-value').value):null, currency:document.getElementById('a-currency').value, date, status:document.getElementById('a-status').value, sector:document.getElementById('a-sector').value||'', notes:(document.getElementById('a-notes').value||'').trim() });
+  T.push({ name, client:(document.getElementById('a-client').value||'').trim()||'—', value:document.getElementById('a-value').value?Number(document.getElementById('a-value').value):null, currency:document.getElementById('a-currency').value, date, status:document.getElementById('a-status').value, sector:document.getElementById('a-sector').value||'', contact:(document.getElementById('a-contact').value||'').trim(), competitor:(document.getElementById('a-competitor').value||'').trim(), lossReason:document.getElementById('a-lossreason').value||'', notes:(document.getElementById('a-notes').value||'').trim() });
   save(); closeAdd(); document.getElementById('yearFilter').innerHTML=''; render();
 }
 
@@ -623,6 +747,9 @@ function openEdit(idx) {
   document.getElementById('e-status').value = t.status||'Submitted';
   document.getElementById('e-sector').value = t.sector||'';
   document.getElementById('e-notes').value = t.notes||'';
+  document.getElementById('e-contact').value = t.contact||'';
+  document.getElementById('e-competitor').value = t.competitor||'';
+  document.getElementById('e-lossreason').value = t.lossReason||'';
   document.getElementById('editModal').classList.add('open');
 }
 function closeEdit() { document.getElementById('editModal').classList.remove('open'); editIdx=null; }
@@ -631,7 +758,7 @@ function updateTender() {
   const name=(document.getElementById('e-name').value||'').trim();
   const date=document.getElementById('e-date').value;
   if (!name||!date) { alert('Please fill in the tender name and date.'); return; }
-  T[editIdx] = { ...T[editIdx], name, client:(document.getElementById('e-client').value||'').trim()||'—', value:document.getElementById('e-value').value?Number(document.getElementById('e-value').value):null, currency:document.getElementById('e-currency').value, date, status:document.getElementById('e-status').value, sector:document.getElementById('e-sector').value||'', notes:(document.getElementById('e-notes').value||'').trim() };
+  T[editIdx] = { ...T[editIdx], name, client:(document.getElementById('e-client').value||'').trim()||'—', value:document.getElementById('e-value').value?Number(document.getElementById('e-value').value):null, currency:document.getElementById('e-currency').value, date, status:document.getElementById('e-status').value, sector:document.getElementById('e-sector').value||'', contact:(document.getElementById('e-contact').value||'').trim(), competitor:(document.getElementById('e-competitor').value||'').trim(), lossReason:document.getElementById('e-lossreason').value||'', notes:(document.getElementById('e-notes').value||'').trim() };
   save(); closeEdit(); render();
 }
 
