@@ -202,7 +202,6 @@
     </div>
     <div class="fr"><label>Sector</label><select id="a-sector"><option value="">— select sector —</option><option>Agriculture</option><option>Forestry & Natural Resources</option><option>Clean Energy</option><option>Climate Change</option><option>Education & Skills</option><option>Livelihoods</option><option>Health & Nutrition</option><option>Women & Child Development</option><option>WASH</option><option>Infrastructure & Transportation</option><option>Digi-Tech</option><option>Social Protection & Governance</option><option>Multi-Sector</option><option>Others</option></select></div>
     <div class="fr"><label>Contact person</label><input type="text" id="a-contact" placeholder="e.g. Priya Sharma, +91 98765 43210"></div>
-    <div class="fr"><label>Competitor(s)</label><input type="text" id="a-competitor" placeholder="e.g. XYZ Consulting, ABC Research"></div>
     <div class="fr"><label>Reason for loss</label><select id="a-lossreason"><option value="">— select if lost —</option><option>Price too high</option><option>Technical score</option><option>Strong competition</option><option>No response from client</option><option>Scope mismatch</option><option>Other</option></select></div>
     <div class="fr"><label>Notes</label><textarea id="a-notes" placeholder="e.g. Waiting on procurement officer…"></textarea></div>
     <div class="modal-actions">
@@ -228,7 +227,6 @@
     </div>
     <div class="fr"><label>Sector</label><select id="e-sector"><option value="">— select sector —</option><option>Agriculture</option><option>Forestry & Natural Resources</option><option>Clean Energy</option><option>Climate Change</option><option>Education & Skills</option><option>Livelihoods</option><option>Health & Nutrition</option><option>Women & Child Development</option><option>WASH</option><option>Infrastructure & Transportation</option><option>Digi-Tech</option><option>Social Protection & Governance</option><option>Multi-Sector</option><option>Others</option></select></div>
     <div class="fr"><label>Contact person</label><input type="text" id="e-contact" placeholder="e.g. Priya Sharma, +91 98765 43210"></div>
-    <div class="fr"><label>Competitor(s)</label><input type="text" id="e-competitor" placeholder="e.g. XYZ Consulting, ABC Research"></div>
     <div class="fr"><label>Reason for loss</label><select id="e-lossreason"><option value="">— select if lost —</option><option>Price too high</option><option>Technical score</option><option>Strong competition</option><option>No response from client</option><option>Scope mismatch</option><option>Other</option></select></div>
     <div class="fr"><label>Notes</label><textarea id="e-notes"></textarea></div>
     <div class="modal-actions">
@@ -695,7 +693,7 @@ function render() {
 
 // ADD
 function openAdd() {
-  ['a-name','a-client','a-value','a-notes','a-contact','a-competitor'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['a-name','a-client','a-value','a-notes','a-contact'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const alr=document.getElementById('a-lossreason'); if(alr) alr.value='';
   const ad=document.getElementById('a-date'); if(ad) ad.valueAsDate=new Date();
   const as=document.getElementById('a-sector'); if(as) as.value='';
@@ -708,7 +706,7 @@ function saveTender() {
   const name=(document.getElementById('a-name').value||'').trim();
   const date=document.getElementById('a-date').value;
   if (!name||!date) { alert('Please fill in the tender name and submission date.'); return; }
-  T.push({ name, client:(document.getElementById('a-client').value||'').trim()||'—', value:document.getElementById('a-value').value?Number(document.getElementById('a-value').value):null, currency:document.getElementById('a-currency').value, date, status:document.getElementById('a-status').value, sector:document.getElementById('a-sector').value||'', contact:(document.getElementById('a-contact').value||'').trim(), competitor:(document.getElementById('a-competitor').value||'').trim(), lossReason:document.getElementById('a-lossreason').value||'', notes:(document.getElementById('a-notes').value||'').trim() });
+  T.push({ name, client:(document.getElementById('a-client').value||'').trim()||'—', value:document.getElementById('a-value').value?Number(document.getElementById('a-value').value):null, currency:document.getElementById('a-currency').value, date, status:document.getElementById('a-status').value, sector:document.getElementById('a-sector').value||'', contact:(document.getElementById('a-contact').value||'').trim(), lossReason:document.getElementById('a-lossreason').value||'', notes:(document.getElementById('a-notes').value||'').trim() });
   save(); closeAdd(); document.getElementById('yearFilter').innerHTML=''; render();
 }
 
@@ -724,7 +722,6 @@ function openEdit(idx) {
   document.getElementById('e-sector').value = t.sector||'';
   document.getElementById('e-notes').value = t.notes||'';
   document.getElementById('e-contact').value = t.contact||'';
-  document.getElementById('e-competitor').value = t.competitor||'';
   document.getElementById('e-lossreason').value = t.lossReason||'';
   document.getElementById('editModal').classList.add('open');
 }
@@ -734,7 +731,7 @@ function updateTender() {
   const name=(document.getElementById('e-name').value||'').trim();
   const date=document.getElementById('e-date').value;
   if (!name||!date) { alert('Please fill in the tender name and date.'); return; }
-  T[editIdx] = { ...T[editIdx], name, client:(document.getElementById('e-client').value||'').trim()||'—', value:document.getElementById('e-value').value?Number(document.getElementById('e-value').value):null, currency:document.getElementById('e-currency').value, date, status:document.getElementById('e-status').value, sector:document.getElementById('e-sector').value||'', contact:(document.getElementById('e-contact').value||'').trim(), competitor:(document.getElementById('e-competitor').value||'').trim(), lossReason:document.getElementById('e-lossreason').value||'', notes:(document.getElementById('e-notes').value||'').trim() };
+  T[editIdx] = { ...T[editIdx], name, client:(document.getElementById('e-client').value||'').trim()||'—', value:document.getElementById('e-value').value?Number(document.getElementById('e-value').value):null, currency:document.getElementById('e-currency').value, date, status:document.getElementById('e-status').value, sector:document.getElementById('e-sector').value||'', contact:(document.getElementById('e-contact').value||'').trim(), lossReason:document.getElementById('e-lossreason').value||'', notes:(document.getElementById('e-notes').value||'').trim() };
   save(); closeEdit(); render();
 }
 
