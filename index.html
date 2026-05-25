@@ -449,30 +449,35 @@ function render() {
     if ((t.status==='Submitted'||t.status==='Pending') && t.value) pipe+=Number(t.value);
   });
 
-  let dispMo = curMo, moLbl = 'This month';
-  if (selM !== null) {
-    dispMo = T.filter(t=>t.date.slice(0,4)===selY && parseInt(t.date.slice(5,7))-1===selM).length;
-    moLbl = MN[selM];
-    yearCt = T.filter(t=>t.date.slice(0,4)===selY).length;
-  }
+  // Use selected month if set, otherwise current month
+  const dispM = selM !== null ? selM : tM;
+  const dispY = parseInt(selY);
+  const moLbl = selM !== null ? MN[selM] : 'This month';
+
+  const dispMo = T.filter(t => {
+    const d = new Date(t.date);
+    return d.getFullYear() === dispY && d.getMonth() === dispM;
+  }).length;
+
+  yearCt = T.filter(t=>t.date.slice(0,4)===selY).length;
 
   set('m-week', week); set('m-month', dispMo); set('m-year', yearCt); set('m-fu', fu);
 
-  // Submitted this month: tenders submitted (date) in current calendar month
-  const subThisMo = T.filter(t => {
-    const d = new Date(t.date);
-    return d.getFullYear() === tY && d.getMonth() === tM;
-  }).length;
-  set('m-sub-mo', subThisMo);
-  set('m-sub-mo-sub', MN[tM].slice(0,3) + ' ' + tY);
+  // This month (submitted) — reflects selected month
+  set('m-sub-mo', dispMo);
+  set('m-sub-mo-sub', MN[dispM].slice(0,3) + ' ' + dispY);
 
   // Total: all tenders ever recorded
   set('m-total', T.length);
   set('m-month-lbl', moLbl); set('m-year-lbl', selY);
-  // Total value of all tenders submitted in current calendar month
-  const moVal = T.filter(t => { const d=new Date(t.date); return d.getFullYear()===tY && d.getMonth()===tM && t.value; }).reduce((s,t)=>s+Number(t.value),0);
+
+  // Total value for selected month
+  const moVal = T.filter(t => {
+    const d = new Date(t.date);
+    return d.getFullYear() === dispY && d.getMonth() === dispM && t.value;
+  }).reduce((s,t)=>s+Number(t.value),0);
   set('m-pipe', moVal > 0 ? fmt(moVal,'INR') : '—');
-  set('m-pipe-sub', MN[tM].slice(0,3) + ' ' + tY);
+  set('m-pipe-sub', MN[dispM].slice(0,3) + ' ' + dispY);
   const anyYV = T.filter(t=>t.date.slice(0,4)===String(tY)&&t.value).length > 0;
   set('m-val', anyYV ? fmt(yVal,'INR') : '—'); set('m-val-sub', anyYV ? 'submitted this year' : '');
   const dec = won+lost, wr = dec > 0 ? Math.round(won/dec*100) : null;
