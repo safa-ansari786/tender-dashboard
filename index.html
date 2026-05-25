@@ -123,8 +123,6 @@
   .avg-label{font-size:11px;color:var(--tx2);margin-bottom:3px;}
   .avg-val{font-size:18px;font-weight:500;}
   .avg-sub{font-size:10px;color:var(--tx3);margin-top:2px;}
-  .ttd-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:.5px solid var(--bd);font-size:12px;}
-  .ttd-row:last-child{border-bottom:none;}
   .loss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;}
   .loss-card{background:var(--bg2);border-radius:var(--rm);padding:.625rem .875rem;}
   .loss-name{font-size:11px;color:var(--tx2);margin-bottom:2px;}
@@ -345,12 +343,6 @@
     <div style="position:relative;width:100%;height:180px;"><canvas id="avgChart"></canvas></div>
   </div>
 
-  <!-- TIME TO DECISION -->
-  <div class="card">
-    <div class="sec-title" style="margin-bottom:10px;">Avg. time to decision by sector <span style="font-size:11px;color:var(--tx3);">(decided tenders only)</span></div>
-    <div id="ttdSection"></div>
-  </div>
-
   <!-- REASON FOR LOSS -->
   <div class="card">
     <div class="sec-title" style="margin-bottom:10px;">Reasons for loss</div>
@@ -398,11 +390,12 @@ const SK = 'tenders_v5';
 const MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const BRACKETS = [
-  {l:'<₹1L',min:0,max:1e5},
-  {l:'₹1L–10L',min:1e5,max:1e6},
-  {l:'₹10L–1Cr',min:1e6,max:1e7},
-  {l:'₹1Cr–10Cr',min:1e7,max:1e8},
-  {l:'>₹10Cr',min:1e8,max:Infinity},
+  {l:'Up to ₹10L',min:0,max:1e6},
+  {l:'₹10L–₹50L',min:1e6,max:5e6},
+  {l:'₹50L–₹1Cr',min:5e6,max:1e7},
+  {l:'₹1Cr–₹1.5Cr',min:1e7,max:1.5e7},
+  {l:'₹1.5Cr–₹2Cr',min:1.5e7,max:2e7},
+  {l:'Above ₹2Cr',min:2e7,max:Infinity},
 ];
 
 let T = [], editIdx = null, noteIdx = null, delIdx = null;
@@ -650,23 +643,6 @@ function render() {
     const wonAvgs = secNames.map(s=>{ const st=T.filter(t=>t.sector===s&&t.status==='Won'&&t.value); return st.length?Math.round(st.reduce((a,t)=>a+Number(t.value),0)/st.length):0; });
     const lostAvgs = secNames.map(s=>{ const st=T.filter(t=>t.sector===s&&t.status==='Lost'&&t.value); return st.length?Math.round(st.reduce((a,t)=>a+Number(t.value),0)/st.length):0; });
     window._avgChart = new Chart(avgCtx,{type:'bar',data:{labels:secNames.map(s=>s.length>12?s.slice(0,12)+'…':s),datasets:[{label:'Won',data:wonAvgs,backgroundColor:'#639922'},{label:'Lost',data:lostAvgs,backgroundColor:'#e24b4a'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10}}}},scales:{x:{ticks:{font:{size:9}},grid:{display:false}},y:{ticks:{font:{size:9},callback:v=>v>=1e7?'₹'+(v/1e7).toFixed(1)+'Cr':v>=1e5?'₹'+(v/1e5).toFixed(0)+'L':'₹'+v},grid:{color:'rgba(128,128,128,0.08)'}}}}});
-  }
-
-  // ── TIME TO DECISION ─────────────────────────────────────
-  const ttdEl = document.getElementById('ttdSection');
-  if(ttdEl) {
-    const decidedT = T.filter(t=>(t.status==='Won'||t.status==='Lost')&&t.date&&t.decisionDate);
-    const secList = [...new Set(T.filter(t=>t.sector&&(t.status==='Won'||t.status==='Lost')).map(t=>t.sector))].sort();
-    if(secList.length) {
-      ttdEl.innerHTML = secList.map(s=>{
-        const st = T.filter(t=>t.sector===s&&(t.status==='Won'||t.status==='Lost')&&t.date);
-        const avgDays = Math.round(st.reduce((a,t)=>a+daysAgo(t.date),0)/st.length);
-        const color = avgDays>90?'#e24b4a':avgDays>45?'#ba7517':'#639922';
-        return `<div class="ttd-row"><span style="font-weight:500;">${s}</span><span style="color:${color};font-weight:500;">~${avgDays} days avg</span></div>`;
-      }).join('');
-    } else {
-      ttdEl.innerHTML = '<p style="font-size:12px;color:var(--tx3);">No decided tenders yet.</p>';
-    }
   }
 
   // ── REASON FOR LOSS ──────────────────────────────────────
