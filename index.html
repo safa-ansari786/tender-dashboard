@@ -400,7 +400,7 @@
     <div class="tbl-wrap" style="overflow-x:auto;">
       <table>
         <colgroup><col style="width:160px"><col style="width:110px"><col style="width:80px"><col style="width:90px"><col style="width:100px"><col style="width:110px"><col style="width:100px"><col style="width:110px"><col style="width:110px"><col style="width:110px"><col style="width:110px"><col style="width:100px"><col style="width:80px"></colgroup>
-        <thead><tr><th>Tender name</th><th>Client</th><th>Value</th><th>Status</th><th>Sector</th><th>Submitted</th><th>A&M Prepared by</th><th>A&M Reviewed by</th><th>CV & Exp. Prepared by</th><th>CV & Exp. Reviewed by</th><th>Submitted by</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Tender name</th><th>Client</th><th>Value</th><th>Status</th><th>Sector</th><th>Deadline</th><th>A&M Prepared by</th><th>A&M Reviewed by</th><th>CV & Exp. Prepared by</th><th>CV & Exp. Reviewed by</th><th>Submitted by</th><th>Actions</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
@@ -699,33 +699,7 @@ function render() {
         <div class="sector-stat">${c.prepared+c.reviewed} total</div>
         <div class="sector-wr">A&M Prepared: ${c.prepared} · A&M Reviewed: ${c.reviewed}</div>
       </div>`).join('');
-      const chartId = 'prepByChart';
-      prepEl.innerHTML = `<div class="sector-grid" style="margin-bottom:1rem;">${cards}</div>
-        <div style="position:relative;width:100%;height:${Math.max(160,sorted.length*36)}px;">
-          <canvas id="${chartId}"></canvas>
-        </div>`;
-      const pCtx = document.getElementById(chartId);
-      if(pCtx){
-        if(window._prepChart) window._prepChart.destroy();
-        window._prepChart = new Chart(pCtx,{
-          type:'bar',
-          data:{
-            labels:sorted.map(([n])=>n),
-            datasets:[
-              {label:'A&M Prepared',data:sorted.map(([,c])=>c.prepared),backgroundColor:'#378add',borderRadius:3},
-              {label:'A&M Reviewed',data:sorted.map(([,c])=>c.reviewed),backgroundColor:'#639922',borderRadius:3},
-            ]
-          },
-          options:{
-            indexAxis:'y',responsive:true,maintainAspectRatio:false,
-            plugins:{legend:{display:true,position:'top',labels:{font:{size:11},boxWidth:10}}},
-            scales:{
-              x:{stacked:true,ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(128,128,128,0.08)'}},
-              y:{stacked:true,ticks:{font:{size:11}},grid:{display:false}}
-            }
-          }
-        });
-      }
+      prepEl.innerHTML = `<div class="sector-grid">${cards}</div>`;
     } else {
       prepEl.innerHTML = '<p style="font-size:12px;color:var(--tx3);">No A&M data yet — add names in the A&M Prepared/Reviewed by fields when creating tenders.</p>';
     }
