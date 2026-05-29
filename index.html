@@ -694,12 +694,23 @@ function render() {
     });
     const sorted = Object.entries(people).sort((a,b)=>(b[1].prepared+b[1].reviewed)-(a[1].prepared+a[1].reviewed));
     if(sorted.length) {
-      const cards = sorted.map(([name,c])=>`<div class="sector-card">
+      // Separate cards for A&M Prepared and A&M Reviewed
+      const amPrepPeople = sorted.filter(([,c])=>c.prepared>0);
+      const amRevPeople = sorted.filter(([,c])=>c.reviewed>0);
+      const prepCards = amPrepPeople.map(([name,c])=>`<div class="sector-card">
         <div class="sector-name">${name}</div>
-        <div class="sector-stat">${c.prepared+c.reviewed} total</div>
-        <div class="sector-wr">A&M Prepared: ${c.prepared} · A&M Reviewed: ${c.reviewed}</div>
+        <div class="sector-stat">${c.prepared} tender${c.prepared!==1?'s':''}</div>
+        <div class="sector-wr">A&M Prepared</div>
       </div>`).join('');
-      prepEl.innerHTML = `<div class="sector-grid">${cards}</div>`;
+      const revCards = amRevPeople.map(([name,c])=>`<div class="sector-card">
+        <div class="sector-name">${name}</div>
+        <div class="sector-stat">${c.reviewed} tender${c.reviewed!==1?'s':''}</div>
+        <div class="sector-wr">A&M Reviewed</div>
+      </div>`).join('');
+      prepEl.innerHTML = `
+        ${amPrepPeople.length ? `<p style="font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:8px;">A&M Prepared by</p><div class="sector-grid" style="margin-bottom:1rem;">${prepCards}</div>` : ''}
+        ${amRevPeople.length ? `<p style="font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:8px;">A&M Reviewed by</p><div class="sector-grid">${revCards}</div>` : ''}
+      `;
     } else {
       prepEl.innerHTML = '<p style="font-size:12px;color:var(--tx3);">No A&M data yet — add names in the A&M Prepared/Reviewed by fields when creating tenders.</p>';
     }
