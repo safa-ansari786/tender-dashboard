@@ -211,6 +211,7 @@
       <div><label>CVs prepared by</label><input type="text" id="a-cvsby" placeholder="e.g. Neha Singh"></div>
     </div>
     <div class="fr"><label>Experience prepared by</label><input type="text" id="a-expby" placeholder="e.g. Ravi Verma"></div>
+    <div class="fr"><label>Submitted by</label><input type="text" id="a-submittedby" placeholder="e.g. Safa Ansari"></div>
     <div class="fr"><label>Reason for loss</label><select id="a-lossreason"><option value="">— select if lost —</option><option>Price too high</option><option>Technical score</option><option>Strong competition</option><option>No response from client</option><option>Scope mismatch</option><option>Other</option></select></div>
     <div class="fr"><label>Notes</label><textarea id="a-notes" placeholder="e.g. Waiting on procurement officer…"></textarea></div>
     <div class="modal-actions">
@@ -245,6 +246,7 @@
       <div><label>CVs prepared by</label><input type="text" id="e-cvsby" placeholder="e.g. Neha Singh"></div>
     </div>
     <div class="fr"><label>Experience prepared by</label><input type="text" id="e-expby" placeholder="e.g. Ravi Verma"></div>
+    <div class="fr"><label>Submitted by</label><input type="text" id="e-submittedby" placeholder="e.g. Safa Ansari"></div>
     <div class="fr"><label>Reason for loss</label><select id="e-lossreason"><option value="">— select if lost —</option><option>Price too high</option><option>Technical score</option><option>Strong competition</option><option>No response from client</option><option>Scope mismatch</option><option>Other</option></select></div>
     <div class="fr"><label>Notes</label><textarea id="e-notes"></textarea></div>
     <div class="modal-actions">
@@ -363,6 +365,12 @@
   <div class="card">
     <div class="sec-title" style="margin-bottom:10px;">Reasons for loss</div>
     <div class="loss-grid" id="lossGrid"></div>
+  </div>
+
+  <!-- PREPARED BY COUNT -->
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:10px;">Tender count by team member</div>
+    <div id="prepBySection"></div>
   </div>
 
   <div class="card">
@@ -676,6 +684,50 @@ function render() {
       </div>`).join('') : '<p style="font-size:12px;color:var(--tx3);">No lost tenders yet.</p>';
   }
 
+  // ── PREPARED BY COUNT ───────────────────────────────────
+  const prepEl = document.getElementById('prepBySection');
+  if(prepEl) {
+    const fields = [
+      {key:'preparedBy', label:'Prepared by'},
+      {key:'reviewedBy', label:'Reviewed by'},
+      {key:'coordinatedBy', label:'Coordinated by'},
+      {key:'cvsBy', label:'CVs prepared by'},
+      {key:'expBy', label:'Exp. prepared by'},
+      {key:'submittedBy', label:'Submitted by'},
+    ];
+    // Collect all people and their counts per role
+    const people = {};
+    T.forEach(t => {
+      fields.forEach(f => {
+        const name = (t[f.key]||'').trim();
+        if(!name) return;
+        if(!people[name]) people[name] = {total:0};
+        if(!people[name][f.label]) people[name][f.label] = 0;
+        people[name][f.label]++;
+        people[name].total++;
+      });
+    });
+    const sorted = Object.entries(people).sort((a,b)=>b[1].total-a[1].total);
+    if(sorted.length) {
+      prepEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr>
+          <th style="text-align:left;padding:7px 10px;font-size:11px;font-weight:500;color:var(--tx2);background:var(--bg2);border-bottom:.5px solid var(--bd);">Name</th>
+          ${fields.map(f=>`<th style="text-align:center;padding:7px 6px;font-size:11px;font-weight:500;color:var(--tx2);background:var(--bg2);border-bottom:.5px solid var(--bd);">${f.label}</th>`).join('')}
+          <th style="text-align:center;padding:7px 10px;font-size:11px;font-weight:500;color:var(--tx2);background:var(--bg2);border-bottom:.5px solid var(--bd);">Total</th>
+        </tr></thead>
+        <tbody>
+          ${sorted.map(([name,counts])=>`<tr>
+            <td style="padding:7px 10px;font-weight:500;border-bottom:.5px solid var(--bd);">${name}</td>
+            ${fields.map(f=>`<td style="text-align:center;padding:7px 6px;border-bottom:.5px solid var(--bd);color:${counts[f.label]?'var(--tx)':'var(--tx3)'};">${counts[f.label]||'—'}</td>`).join('')}
+            <td style="text-align:center;padding:7px 10px;font-weight:500;border-bottom:.5px solid var(--bd);color:#185fa5;">${counts.total}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+    } else {
+      prepEl.innerHTML = '<p style="font-size:12px;color:var(--tx3);">No team member data yet — add names when creating tenders.</p>';
+    }
+  }
+
   let filtered = T.filter(t=>parseInt(t.date.slice(0,4))===dispY);
   if (selM !== null) filtered = filtered.filter(t=>parseInt(t.date.slice(5,7))-1===selM);
   if (selSt==='follow-up') filtered=filtered.filter(isOverdue);
@@ -711,7 +763,7 @@ function render() {
 
 // ADD
 function openAdd() {
-  ['a-name','a-client','a-value','a-notes','a-contact','a-preparedby','a-reviewedby','a-coordinatedby','a-cvsby','a-expby'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['a-name','a-client','a-value','a-notes','a-contact','a-preparedby','a-reviewedby','a-coordinatedby','a-cvsby','a-expby','a-submittedby'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const alr=document.getElementById('a-lossreason'); if(alr) alr.value='';
   const ad=document.getElementById('a-date'); if(ad) ad.valueAsDate=new Date();
   const as=document.getElementById('a-sector'); if(as) as.value='';
@@ -724,7 +776,7 @@ function saveTender() {
   const name=(document.getElementById('a-name').value||'').trim();
   const date=document.getElementById('a-date').value;
   if (!name||!date) { alert('Please fill in the tender name and submission date.'); return; }
-  T.push({ name, client:(document.getElementById('a-client').value||'').trim()||'—', value:document.getElementById('a-value').value?Number(document.getElementById('a-value').value):null, currency:document.getElementById('a-currency').value, date, status:document.getElementById('a-status').value, sector:document.getElementById('a-sector').value||'', contact:(document.getElementById('a-contact').value||'').trim(), preparedBy:(document.getElementById('a-preparedby').value||'').trim(), reviewedBy:(document.getElementById('a-reviewedby').value||'').trim(), coordinatedBy:(document.getElementById('a-coordinatedby').value||'').trim(), cvsBy:(document.getElementById('a-cvsby').value||'').trim(), expBy:(document.getElementById('a-expby').value||'').trim(), lossReason:document.getElementById('a-lossreason').value||'', notes:(document.getElementById('a-notes').value||'').trim() });
+  T.push({ name, client:(document.getElementById('a-client').value||'').trim()||'—', value:document.getElementById('a-value').value?Number(document.getElementById('a-value').value):null, currency:document.getElementById('a-currency').value, date, status:document.getElementById('a-status').value, sector:document.getElementById('a-sector').value||'', contact:(document.getElementById('a-contact').value||'').trim(), preparedBy:(document.getElementById('a-preparedby').value||'').trim(), reviewedBy:(document.getElementById('a-reviewedby').value||'').trim(), coordinatedBy:(document.getElementById('a-coordinatedby').value||'').trim(), cvsBy:(document.getElementById('a-cvsby').value||'').trim(), expBy:(document.getElementById('a-expby').value||'').trim(), submittedBy:(document.getElementById('a-submittedby').value||'').trim(), lossReason:document.getElementById('a-lossreason').value||'', notes:(document.getElementById('a-notes').value||'').trim() });
   save(); closeAdd(); document.getElementById('yearFilter').innerHTML=''; render();
 }
 
@@ -745,6 +797,7 @@ function openEdit(idx) {
   document.getElementById('e-coordinatedby').value = t.coordinatedBy||'';
   document.getElementById('e-cvsby').value = t.cvsBy||'';
   document.getElementById('e-expby').value = t.expBy||'';
+  document.getElementById('e-submittedby').value = t.submittedBy||'';
   document.getElementById('e-lossreason').value = t.lossReason||'';
   document.getElementById('editModal').classList.add('open');
 }
@@ -754,7 +807,7 @@ function updateTender() {
   const name=(document.getElementById('e-name').value||'').trim();
   const date=document.getElementById('e-date').value;
   if (!name||!date) { alert('Please fill in the tender name and date.'); return; }
-  T[editIdx] = { ...T[editIdx], name, client:(document.getElementById('e-client').value||'').trim()||'—', value:document.getElementById('e-value').value?Number(document.getElementById('e-value').value):null, currency:document.getElementById('e-currency').value, date, status:document.getElementById('e-status').value, sector:document.getElementById('e-sector').value||'', contact:(document.getElementById('e-contact').value||'').trim(), preparedBy:(document.getElementById('e-preparedby').value||'').trim(), reviewedBy:(document.getElementById('e-reviewedby').value||'').trim(), coordinatedBy:(document.getElementById('e-coordinatedby').value||'').trim(), cvsBy:(document.getElementById('e-cvsby').value||'').trim(), expBy:(document.getElementById('e-expby').value||'').trim(), lossReason:document.getElementById('e-lossreason').value||'', notes:(document.getElementById('e-notes').value||'').trim() };
+  T[editIdx] = { ...T[editIdx], name, client:(document.getElementById('e-client').value||'').trim()||'—', value:document.getElementById('e-value').value?Number(document.getElementById('e-value').value):null, currency:document.getElementById('e-currency').value, date, status:document.getElementById('e-status').value, sector:document.getElementById('e-sector').value||'', contact:(document.getElementById('e-contact').value||'').trim(), preparedBy:(document.getElementById('e-preparedby').value||'').trim(), reviewedBy:(document.getElementById('e-reviewedby').value||'').trim(), coordinatedBy:(document.getElementById('e-coordinatedby').value||'').trim(), cvsBy:(document.getElementById('e-cvsby').value||'').trim(), expBy:(document.getElementById('e-expby').value||'').trim(), submittedBy:(document.getElementById('e-submittedby').value||'').trim(), lossReason:document.getElementById('e-lossreason').value||'', notes:(document.getElementById('e-notes').value||'').trim() };
   save(); closeEdit(); render();
 }
 
