@@ -695,7 +695,6 @@ function render() {
       {key:'expBy', label:'Exp. prepared by'},
       {key:'submittedBy', label:'Submitted by'},
     ];
-    // Collect all people and their counts per role
     const people = {};
     T.forEach(t => {
       fields.forEach(f => {
@@ -709,20 +708,14 @@ function render() {
     });
     const sorted = Object.entries(people).sort((a,b)=>b[1].total-a[1].total);
     if(sorted.length) {
-      prepEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead><tr>
-          <th style="text-align:left;padding:7px 10px;font-size:11px;font-weight:500;color:var(--tx2);background:var(--bg2);border-bottom:.5px solid var(--bd);">Name</th>
-          ${fields.map(f=>`<th style="text-align:center;padding:7px 6px;font-size:11px;font-weight:500;color:var(--tx2);background:var(--bg2);border-bottom:.5px solid var(--bd);">${f.label}</th>`).join('')}
-          <th style="text-align:center;padding:7px 10px;font-size:11px;font-weight:500;color:var(--tx2);background:var(--bg2);border-bottom:.5px solid var(--bd);">Total</th>
-        </tr></thead>
-        <tbody>
-          ${sorted.map(([name,counts])=>`<tr>
-            <td style="padding:7px 10px;font-weight:500;border-bottom:.5px solid var(--bd);">${name}</td>
-            ${fields.map(f=>`<td style="text-align:center;padding:7px 6px;border-bottom:.5px solid var(--bd);color:${counts[f.label]?'var(--tx)':'var(--tx3)'};">${counts[f.label]||'—'}</td>`).join('')}
-            <td style="text-align:center;padding:7px 10px;font-weight:500;border-bottom:.5px solid var(--bd);color:#185fa5;">${counts.total}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>`;
+      prepEl.innerHTML = `<div class="sector-grid">${sorted.map(([name,counts])=>{
+        const roles = fields.filter(f=>counts[f.label]).map(f=>`${f.label}: ${counts[f.label]}`).join(' · ');
+        return `<div class="sector-card">
+          <div class="sector-name">${name}</div>
+          <div class="sector-stat">${counts.total} tender${counts.total!==1?'s':''}</div>
+          <div class="sector-wr">${roles}</div>
+        </div>`;
+      }).join('')}</div>`;
     } else {
       prepEl.innerHTML = '<p style="font-size:12px;color:var(--tx3);">No team member data yet — add names when creating tenders.</p>';
     }
