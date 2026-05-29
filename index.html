@@ -118,11 +118,6 @@
   .trend-bar-fill{height:100%;border-radius:99px;}
   .trend-pct{width:30px;text-align:right;font-weight:500;font-size:11px;}
   .trend-dec{width:38px;text-align:right;color:var(--tx3);font-size:10px;}
-  .avg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
-  .avg-card{background:var(--bg2);border-radius:var(--rm);padding:.75rem 1rem;}
-  .avg-label{font-size:11px;color:var(--tx2);margin-bottom:3px;}
-  .avg-val{font-size:18px;font-weight:500;}
-  .avg-sub{font-size:10px;color:var(--tx3);margin-top:2px;}
   .loss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;}
   .loss-card{background:var(--bg2);border-radius:var(--rm);padding:.625rem .875rem;}
   .loss-name{font-size:11px;color:var(--tx2);margin-bottom:2px;}
@@ -349,16 +344,6 @@
     <div id="trendSection"></div>
   </div>
 
-  <!-- AVERAGE TENDER VALUE -->
-  <div class="card">
-    <div class="sec-title" style="margin-bottom:10px;">Average tender value</div>
-    <div class="avg-grid">
-      <div class="avg-card"><div class="avg-label">Avg value — Won</div><div class="avg-val" id="avg-won">—</div><div class="avg-sub" id="avg-won-sub"></div></div>
-      <div class="avg-card"><div class="avg-label">Avg value — Lost</div><div class="avg-val" id="avg-lost">—</div><div class="avg-sub" id="avg-lost-sub"></div></div>
-    </div>
-    <div style="position:relative;width:100%;height:180px;"><canvas id="avgChart"></canvas></div>
-  </div>
-
   <!-- REASON FOR LOSS -->
   <div class="card">
     <div class="sec-title" style="margin-bottom:10px;">Reasons for loss</div>
@@ -369,6 +354,12 @@
   <div class="card">
     <div class="sec-title" style="margin-bottom:10px;">Tender count by team member</div>
     <div id="prepBySection"></div>
+  </div>
+
+  <!-- CV & EXP COUNT -->
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:10px;">CV & Experience count by team member</div>
+    <div id="cvBySection"></div>
   </div>
 
   <div class="card">
@@ -649,24 +640,6 @@ function render() {
     }).join('');
   }
 
-  // ── AVERAGE TENDER VALUE ─────────────────────────────────
-  const wonWithVal = T.filter(t=>t.status==='Won'&&t.value);
-  const lostWithVal = T.filter(t=>t.status==='Lost'&&t.value);
-  const avgWon = wonWithVal.length ? Math.round(wonWithVal.reduce((s,t)=>s+Number(t.value),0)/wonWithVal.length) : null;
-  const avgLost = lostWithVal.length ? Math.round(lostWithVal.reduce((s,t)=>s+Number(t.value),0)/lostWithVal.length) : null;
-  set('avg-won', avgWon ? fmt(avgWon,'INR') : '—');
-  set('avg-won-sub', wonWithVal.length ? wonWithVal.length+' won tenders' : 'no data');
-  set('avg-lost', avgLost ? fmt(avgLost,'INR') : '—');
-  set('avg-lost-sub', lostWithVal.length ? lostWithVal.length+' lost tenders' : 'no data');
-  const avgCtx = document.getElementById('avgChart');
-  if(avgCtx) {
-    if(window._avgChart) window._avgChart.destroy();
-    const secNames = [...new Set(T.filter(t=>t.sector&&t.value&&(t.status==='Won'||t.status==='Lost')).map(t=>t.sector))].sort();
-    const wonAvgs = secNames.map(s=>{ const st=T.filter(t=>t.sector===s&&t.status==='Won'&&t.value); return st.length?Math.round(st.reduce((a,t)=>a+Number(t.value),0)/st.length):0; });
-    const lostAvgs = secNames.map(s=>{ const st=T.filter(t=>t.sector===s&&t.status==='Lost'&&t.value); return st.length?Math.round(st.reduce((a,t)=>a+Number(t.value),0)/st.length):0; });
-    window._avgChart = new Chart(avgCtx,{type:'bar',data:{labels:secNames.map(s=>s.length>12?s.slice(0,12)+'…':s),datasets:[{label:'Won',data:wonAvgs,backgroundColor:'#639922'},{label:'Lost',data:lostAvgs,backgroundColor:'#e24b4a'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10}}}},scales:{x:{ticks:{font:{size:9}},grid:{display:false}},y:{ticks:{font:{size:9},callback:v=>v>=1e7?'₹'+(v/1e7).toFixed(1)+'Cr':v>=1e5?'₹'+(v/1e5).toFixed(0)+'L':'₹'+v},grid:{color:'rgba(128,128,128,0.08)'}}}}});
-  }
-
   // ── REASON FOR LOSS ──────────────────────────────────────
   const lossEl = document.getElementById('lossGrid');
   if(lossEl) {
@@ -713,6 +686,29 @@ function render() {
       `;
     } else {
       prepEl.innerHTML = '<p style="font-size:12px;color:var(--tx3);">No A&M data yet — add names in the A&M Prepared/Reviewed by fields when creating tenders.</p>';
+    }
+  }
+
+  // ── CV & EXP COUNT BY PERSON ────────────────────────────
+  const cvEl = document.getElementById('cvBySection');
+  if(cvEl) {
+    const cvPeople = {};
+    T.forEach(t => {
+      const name = (t.cvsBy||'').trim();
+      if(!name) return;
+      if(!cvPeople[name]) cvPeople[name] = 0;
+      cvPeople[name]++;
+    });
+    const cvSorted = Object.entries(cvPeople).sort((a,b)=>b[1]-a[1]);
+    if(cvSorted.length) {
+      const cvCards = cvSorted.map(([name,ct])=>`<div class="sector-card">
+        <div class="sector-name">${name}</div>
+        <div class="sector-stat">${ct} tender${ct!==1?'s':''}</div>
+        <div class="sector-wr">CV & Exp. Prepared</div>
+      </div>`).join('');
+      cvEl.innerHTML = `<div class="sector-grid">${cvCards}</div>`;
+    } else {
+      cvEl.innerHTML = '<p style="font-size:12px;color:var(--tx3);">No CV & Experience data yet.</p>';
     }
   }
 
