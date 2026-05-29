@@ -208,9 +208,8 @@
     </div>
     <div class="fr2">
       <div><label>Coordinated by</label><input type="text" id="a-coordinatedby" placeholder="e.g. Amit Kumar"></div>
-      <div><label>CVs prepared by</label><input type="text" id="a-cvsby" placeholder="e.g. Neha Singh"></div>
+      <div><label>CVs & Experience by</label><input type="text" id="a-cvsby" placeholder="e.g. Neha Singh"></div>
     </div>
-    <div class="fr"><label>Experience prepared by</label><input type="text" id="a-expby" placeholder="e.g. Ravi Verma"></div>
     <div class="fr"><label>Submitted by</label><input type="text" id="a-submittedby" placeholder="e.g. Safa Ansari"></div>
     <div class="fr"><label>Reason for loss</label><select id="a-lossreason"><option value="">— select if lost —</option><option>Price too high</option><option>Technical score</option><option>Strong competition</option><option>No response from client</option><option>Scope mismatch</option><option>Other</option></select></div>
     <div class="fr"><label>Notes</label><textarea id="a-notes" placeholder="e.g. Waiting on procurement officer…"></textarea></div>
@@ -243,9 +242,8 @@
     </div>
     <div class="fr2">
       <div><label>Coordinated by</label><input type="text" id="e-coordinatedby" placeholder="e.g. Amit Kumar"></div>
-      <div><label>CVs prepared by</label><input type="text" id="e-cvsby" placeholder="e.g. Neha Singh"></div>
+      <div><label>CVs & Experience by</label><input type="text" id="e-cvsby" placeholder="e.g. Neha Singh"></div>
     </div>
-    <div class="fr"><label>Experience prepared by</label><input type="text" id="e-expby" placeholder="e.g. Ravi Verma"></div>
     <div class="fr"><label>Submitted by</label><input type="text" id="e-submittedby" placeholder="e.g. Safa Ansari"></div>
     <div class="fr"><label>Reason for loss</label><select id="e-lossreason"><option value="">— select if lost —</option><option>Price too high</option><option>Technical score</option><option>Strong competition</option><option>No response from client</option><option>Scope mismatch</option><option>Other</option></select></div>
     <div class="fr"><label>Notes</label><textarea id="e-notes"></textarea></div>
@@ -399,10 +397,10 @@
         </select>
       </div>
     </div>
-    <div class="tbl-wrap">
+    <div class="tbl-wrap" style="overflow-x:auto;">
       <table>
-        <colgroup><col style="width:22%"><col style="width:14%"><col style="width:12%"><col style="width:11%"><col style="width:11%"><col style="width:19%"><col style="width:11%"></colgroup>
-        <thead><tr><th>Tender name</th><th>Client</th><th>Value</th><th>Status</th><th>Sector</th><th>Submitted</th><th>Actions</th></tr></thead>
+        <colgroup><col style="width:160px"><col style="width:110px"><col style="width:80px"><col style="width:90px"><col style="width:100px"><col style="width:110px"><col style="width:100px"><col style="width:100px"><col style="width:100px"><col style="width:100px"><col style="width:80px"></colgroup>
+        <thead><tr><th>Tender name</th><th>Client</th><th>Value</th><th>Status</th><th>Sector</th><th>Submitted</th><th>Prepared by</th><th>Reviewed by</th><th>CVs & Exp. by</th><th>Submitted by</th><th>Actions</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
@@ -691,8 +689,7 @@ function render() {
       {key:'preparedBy', label:'Prepared by'},
       {key:'reviewedBy', label:'Reviewed by'},
       {key:'coordinatedBy', label:'Coordinated by'},
-      {key:'cvsBy', label:'CVs prepared by'},
-      {key:'expBy', label:'Exp. prepared by'},
+      {key:'cvsBy', label:'CVs & Exp. by'},
       {key:'submittedBy', label:'Submitted by'},
     ];
     const people = {};
@@ -708,14 +705,47 @@ function render() {
     });
     const sorted = Object.entries(people).sort((a,b)=>b[1].total-a[1].total);
     if(sorted.length) {
-      prepEl.innerHTML = `<div class="sector-grid">${sorted.map(([name,counts])=>{
+      // Cards
+      const cards = sorted.map(([name,counts])=>{
         const roles = fields.filter(f=>counts[f.label]).map(f=>`${f.label}: ${counts[f.label]}`).join(' · ');
         return `<div class="sector-card">
           <div class="sector-name">${name}</div>
           <div class="sector-stat">${counts.total} tender${counts.total!==1?'s':''}</div>
           <div class="sector-wr">${roles}</div>
         </div>`;
-      }).join('')}</div>`;
+      }).join('');
+      // Bar chart
+      const chartId = 'prepByChart';
+      prepEl.innerHTML = `<div class="sector-grid" style="margin-bottom:1rem;">${cards}</div>
+        <div style="position:relative;width:100%;height:${Math.max(160, sorted.length*32)}px;">
+          <canvas id="${chartId}"></canvas>
+        </div>`;
+      const pCtx = document.getElementById(chartId);
+      if(pCtx){
+        if(window._prepChart) window._prepChart.destroy();
+        window._prepChart = new Chart(pCtx, {
+          type:'bar',
+          data:{
+            labels: sorted.map(([name])=>name),
+            datasets: fields.map((f,i)=>({
+              label: f.label,
+              data: sorted.map(([,counts])=>counts[f.label]||0),
+              backgroundColor: ['#378add','#639922','#ba7517','#9b59b6','#e24b4a'][i],
+              borderRadius: 3,
+            }))
+          },
+          options:{
+            indexAxis:'y',
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{legend:{display:true,position:'top',labels:{font:{size:10},boxWidth:10}}},
+            scales:{
+              x:{stacked:true,ticks:{font:{size:10},stepSize:1},grid:{color:'rgba(128,128,128,0.08)'}},
+              y:{stacked:true,ticks:{font:{size:11}},grid:{display:false}}
+            }
+          }
+        });
+      }
     } else {
       prepEl.innerHTML = '<p style="font-size:12px;color:var(--tx3);">No team member data yet — add names when creating tenders.</p>';
     }
@@ -745,6 +775,10 @@ function render() {
       <td><span class="badge ${cls}">${t.status}</span></td>
       <td>${t.sector||'—'}</td>
       <td>${dl}</td>
+      <td style="color:var(--tx2);">${t.preparedBy||'—'}</td>
+      <td style="color:var(--tx2);">${t.reviewedBy||'—'}</td>
+      <td style="color:var(--tx2);">${t.cvsBy||'—'}</td>
+      <td style="color:var(--tx2);">${t.submittedBy||'—'}</td>
       <td><div class="act-cell">
         <i class="ti ti-pencil act-icon edit" title="Edit" onclick="openEdit(${ri})"></i>
         <i class="ti ti-trash act-icon del" title="Delete" onclick="openDel(${ri})"></i>
@@ -756,7 +790,7 @@ function render() {
 
 // ADD
 function openAdd() {
-  ['a-name','a-client','a-value','a-notes','a-contact','a-preparedby','a-reviewedby','a-coordinatedby','a-cvsby','a-expby','a-submittedby'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['a-name','a-client','a-value','a-notes','a-contact','a-preparedby','a-reviewedby','a-coordinatedby','a-cvsby','a-submittedby'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const alr=document.getElementById('a-lossreason'); if(alr) alr.value='';
   const ad=document.getElementById('a-date'); if(ad) ad.valueAsDate=new Date();
   const as=document.getElementById('a-sector'); if(as) as.value='';
@@ -769,7 +803,7 @@ function saveTender() {
   const name=(document.getElementById('a-name').value||'').trim();
   const date=document.getElementById('a-date').value;
   if (!name||!date) { alert('Please fill in the tender name and submission date.'); return; }
-  T.push({ name, client:(document.getElementById('a-client').value||'').trim()||'—', value:document.getElementById('a-value').value?Number(document.getElementById('a-value').value):null, currency:document.getElementById('a-currency').value, date, status:document.getElementById('a-status').value, sector:document.getElementById('a-sector').value||'', contact:(document.getElementById('a-contact').value||'').trim(), preparedBy:(document.getElementById('a-preparedby').value||'').trim(), reviewedBy:(document.getElementById('a-reviewedby').value||'').trim(), coordinatedBy:(document.getElementById('a-coordinatedby').value||'').trim(), cvsBy:(document.getElementById('a-cvsby').value||'').trim(), expBy:(document.getElementById('a-expby').value||'').trim(), submittedBy:(document.getElementById('a-submittedby').value||'').trim(), lossReason:document.getElementById('a-lossreason').value||'', notes:(document.getElementById('a-notes').value||'').trim() });
+  T.push({ name, client:(document.getElementById('a-client').value||'').trim()||'—', value:document.getElementById('a-value').value?Number(document.getElementById('a-value').value):null, currency:document.getElementById('a-currency').value, date, status:document.getElementById('a-status').value, sector:document.getElementById('a-sector').value||'', contact:(document.getElementById('a-contact').value||'').trim(), preparedBy:(document.getElementById('a-preparedby').value||'').trim(), reviewedBy:(document.getElementById('a-reviewedby').value||'').trim(), coordinatedBy:(document.getElementById('a-coordinatedby').value||'').trim(), cvsBy:(document.getElementById('a-cvsby').value||'').trim(), submittedBy:(document.getElementById('a-submittedby').value||'').trim(), lossReason:document.getElementById('a-lossreason').value||'', notes:(document.getElementById('a-notes').value||'').trim() });
   save(); closeAdd(); document.getElementById('yearFilter').innerHTML=''; render();
 }
 
@@ -789,7 +823,6 @@ function openEdit(idx) {
   document.getElementById('e-reviewedby').value = t.reviewedBy||'';
   document.getElementById('e-coordinatedby').value = t.coordinatedBy||'';
   document.getElementById('e-cvsby').value = t.cvsBy||'';
-  document.getElementById('e-expby').value = t.expBy||'';
   document.getElementById('e-submittedby').value = t.submittedBy||'';
   document.getElementById('e-lossreason').value = t.lossReason||'';
   document.getElementById('editModal').classList.add('open');
@@ -800,7 +833,7 @@ function updateTender() {
   const name=(document.getElementById('e-name').value||'').trim();
   const date=document.getElementById('e-date').value;
   if (!name||!date) { alert('Please fill in the tender name and date.'); return; }
-  T[editIdx] = { ...T[editIdx], name, client:(document.getElementById('e-client').value||'').trim()||'—', value:document.getElementById('e-value').value?Number(document.getElementById('e-value').value):null, currency:document.getElementById('e-currency').value, date, status:document.getElementById('e-status').value, sector:document.getElementById('e-sector').value||'', contact:(document.getElementById('e-contact').value||'').trim(), preparedBy:(document.getElementById('e-preparedby').value||'').trim(), reviewedBy:(document.getElementById('e-reviewedby').value||'').trim(), coordinatedBy:(document.getElementById('e-coordinatedby').value||'').trim(), cvsBy:(document.getElementById('e-cvsby').value||'').trim(), expBy:(document.getElementById('e-expby').value||'').trim(), submittedBy:(document.getElementById('e-submittedby').value||'').trim(), lossReason:document.getElementById('e-lossreason').value||'', notes:(document.getElementById('e-notes').value||'').trim() };
+  T[editIdx] = { ...T[editIdx], name, client:(document.getElementById('e-client').value||'').trim()||'—', value:document.getElementById('e-value').value?Number(document.getElementById('e-value').value):null, currency:document.getElementById('e-currency').value, date, status:document.getElementById('e-status').value, sector:document.getElementById('e-sector').value||'', contact:(document.getElementById('e-contact').value||'').trim(), preparedBy:(document.getElementById('e-preparedby').value||'').trim(), reviewedBy:(document.getElementById('e-reviewedby').value||'').trim(), coordinatedBy:(document.getElementById('e-coordinatedby').value||'').trim(), cvsBy:(document.getElementById('e-cvsby').value||'').trim(), submittedBy:(document.getElementById('e-submittedby').value||'').trim(), lossReason:document.getElementById('e-lossreason').value||'', notes:(document.getElementById('e-notes').value||'').trim() };
   save(); closeEdit(); render();
 }
 
